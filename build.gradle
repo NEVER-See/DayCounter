@@ -1,0 +1,35 @@
+plugins { id 'net.fabricmc.fabric-loom' version '1.19.3' }
+
+group = 'dev.daycounter'
+version = '1.1.0+26.3'
+base { archivesName = 'daycounter' }
+repositories {
+    mavenCentral()
+    maven { url 'https://maven.terraformersmc.com/releases/' }
+}
+loom {
+    splitEnvironmentSourceSets()
+    mods { daycounter { sourceSet sourceSets.main; sourceSet sourceSets.client } }
+    runs {
+        client { runDir 'run/client' }
+        server { runDir 'run/server' }
+    }
+}
+dependencies {
+    minecraft 'com.mojang:minecraft:26.3'
+    implementation 'net.fabricmc:fabric-loader:0.20.1'
+    implementation 'net.fabricmc.fabric-api:fabric-api:0.165.0+26.3'
+    compileOnly 'com.terraformersmc:modmenu:21.0.0'
+    testImplementation platform('org.junit:junit-bom:5.14.1')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+processResources {
+    inputs.property 'version', project.version
+    filesMatching('fabric.mod.json') { expand 'version': project.version }
+}
+tasks.withType(JavaCompile).configureEach { options.release = 25; options.encoding = 'UTF-8' }
+test { useJUnitPlatform(); systemProperty 'java.io.tmpdir', System.getProperty('java.io.tmpdir') }
+java { withSourcesJar(); sourceCompatibility = JavaVersion.VERSION_25; targetCompatibility = JavaVersion.VERSION_25 }
+
+jar { from('LICENSE') }

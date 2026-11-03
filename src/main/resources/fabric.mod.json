@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "daycounter",
+  "version": "${version}",
+  "name": "DayCounter",
+  "authors": ["NEVER"],
+  "license": "MIT",
+  "contact": {
+    "homepage": "https://github.com/NEVER-See/DayCounter",
+    "sources": "https://github.com/NEVER-See/DayCounter",
+    "issues": "https://github.com/NEVER-See/DayCounter/issues"
+  },
+  "description": "A small new-day notification with a persistent, command-independent day counter.",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["dev.daycounter.DayCounter"],
+    "client": ["dev.daycounter.DayCounterClient"],
+    "modmenu": ["dev.daycounter.ui.ModMenuIntegration"]
+  },
+  "mixins": ["daycounter.mixins.json"],
+  "icon": "assets/daycounter/icon.png",
+  "depends": {"fabricloader": ">=0.20.1", "minecraft": "26.3", "java": ">=25", "fabric-api": "*"},
+  "suggests": {"modmenu": ">=21.0.0"}
+}
