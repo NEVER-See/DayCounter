@@ -2,6 +2,7 @@ param(
     [string]$JavaHome = $env:JAVA_HOME,
     [string]$CacheRoot = (Join-Path $PSScriptRoot '.cache'),
     [string[]]$Tasks = @('build'),
+    [string]$MinecraftVersion = '26.3',
     [switch]$Offline
 )
 $ErrorActionPreference = 'Stop'
@@ -19,7 +20,7 @@ $env:TEMP = $CacheRoot
 $env:TMP = $CacheRoot
 Push-Location $PSScriptRoot
 try {
-    $arguments = @("-Djava.io.tmpdir=$CacheRoot", '-jar', './gradle/wrapper/gradle-wrapper.jar') + $Tasks + @('--console=plain')
+    $arguments = @("-Djava.io.tmpdir=$CacheRoot", '-jar', './gradle/wrapper/gradle-wrapper.jar') + $Tasks + @('--console=plain', '-Dfabric.loom.ci=true', ('-PminecraftVersion=' + $MinecraftVersion))
     if ($Offline) { $arguments += '--offline' }
     & $java @arguments
     if ($LASTEXITCODE -ne 0) { throw "Gradle failed: $LASTEXITCODE" }

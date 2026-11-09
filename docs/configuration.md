@@ -1,10 +1,10 @@
 # Configuration
 
-[README](../README.md) · [Русский](#русский)
+[README](../README.md) · [Compatibility](compatibility.md) · [Русский](#русский)
 
 ## Settings screen
 
-Install optional **Mod Menu 21.0.0**, then open **Mods → DayCounter → Configure**. Appearance and sound settings are local to each client; they do not alter the world's counter.
+Install the optional **Mod Menu** version listed for your Minecraft version in the [compatibility table](compatibility.md), then open **Mods → DayCounter → Configure**. Appearance and sound settings are local to each client; they do not alter the world's counter.
 
 - **Apply** saves valid changes and makes them active. It is available when settings have changed.
 - **Cancel**, including closing the screen, discards changes made since the last Apply.
@@ -75,21 +75,21 @@ All audio is supplied by Minecraft. Only these identifiers are supported:
 
 ## World data and multiplayer
 
-The counter belongs to the world, not to a player or client settings file. DayCounter stores it as Overworld saved data with identifier `daycounter:days`. In Minecraft 26.3, the file is located relative to the world's folder at:
+The counter belongs to the world, not to a player or client settings file. In Minecraft **1.21.x**, its path relative to the world folder is `data/daycounter_days.dat`. In **26.x**, DayCounter uses Overworld saved data with identifier `daycounter:days`; for all supported **26.x** versions, its path relative to the world folder is:
 
 ```text
 dimensions/minecraft/overworld/data/daycounter/days.dat
 ```
 
-Minecraft saves this data during normal world saves. Include it when backing up or moving the world. The stored number starts at 1 and advances at natural dawns and successful sleep transitions. It does not infer days that passed before installation or while the mod was absent. Changing client settings or resetting them does not reset the world count.
+When opening a 1.21.x world in 26.x, DayCounter imports the legacy file once if no modern counter exists. It preserves the original file and writes the imported counter through normal world saves. Existing modern data takes precedence. An unreadable or invalid legacy counter is logged and starts at day 1; the original is retained. Back up the whole world before upgrading, and include its counter files when moving it. The stored number starts at 1 and advances at natural dawns and successful sleep transitions. It does not infer days that passed before installation or while the mod was absent. Changing client settings or resetting them does not reset the world count.
 
-Singleplayer uses the server component included in the same JAR. For remote play, install DayCounter on the server and on each client that should display the day. Without the server component, the client hides the count instead of estimating it. Clients without DayCounter can connect, but receive no notification.
+Singleplayer uses the server component included in the same JAR. For remote play, install the same DayCounter JAR for your exact Minecraft version on the server and on each client that should display the day. Without the server component, the client hides the count instead of estimating it. Clients without DayCounter can connect, but receive no notification.
 
 ## Русский
 
 ### Экран настроек
 
-Установите необязательный **Mod Menu 21.0.0** и откройте **Моды → DayCounter → Настройки**. Оформление и звук настраиваются отдельно на каждом клиенте и не меняют счётчик мира.
+Установите необязательный **Mod Menu** для своей версии Minecraft по [таблице совместимости](compatibility.md#русский) и откройте **Моды → DayCounter → Настройки**. Оформление и звук настраиваются отдельно на каждом клиенте и не меняют счётчик мира.
 
 - **Применить** сохраняет допустимые изменения и включает их.
 - **Отмена** и закрытие экрана отменяют изменения после последнего применения.
@@ -119,8 +119,10 @@ Singleplayer uses the server component included in the same JAR. For remote play
 
 ### Счётчик мира
 
-Число хранится отдельно от клиентских настроек: `dimensions/minecraft/overworld/data/daycounter/days.dat` относительно папки мира. Оно сохраняется вместе с миром; включайте этот файл в резервную копию и перенос мира. Сброс оформления не сбрасывает счётчик.
+Число хранится отдельно от клиентских настроек. В **Minecraft 1.21.x** это `data/daycounter_days.dat` относительно папки мира. В **26.x** используется запись основного мира с идентификатором `daycounter:days`; во всех поддерживаемых **26.x** её путь относительно папки мира — `dimensions/minecraft/overworld/data/daycounter/days.dat`.
+
+При открытии мира 1.21.x в 26.x старый счётчик импортируется один раз, если современных данных ещё нет. Исходный файл остаётся нетронутым; новый счётчик записывается при обычном сохранении мира. Существующие современные данные имеют приоритет. При ошибке чтения или недопустимом значении в журнал записывается сообщение, отсчёт начинается с дня 1, а исходник сохраняется. Перед обновлением сделайте резервную копию всего мира; при переносе включайте файлы счётчика. Сброс оформления не сбрасывает число дней.
 
 Отсчёт начинается с дня 1. Естественные рассветы и успешный сон увеличивают число, команды времени сами по себе — нет. Дни до установки и время работы мира без мода не восстанавливаются.
 
-Для одиночной игры достаточно одного JAR в клиенте. На удалённом сервере тот же JAR нужен на сервере и на клиентах, которым требуется уведомление. Без серверной части число скрыто; игроки без клиентского мода могут подключаться, но уведомления не видят.
+Для одиночной игры достаточно одного JAR в клиенте. На удалённом сервере один и тот же JAR для точной версии Minecraft нужен на сервере и на клиентах, которым требуется уведомление. Без серверной части число скрыто; игроки без клиентского мода могут подключаться, но уведомления не видят.

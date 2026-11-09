@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.2.0 — 2026-11-10
+
+- Added target-specific builds for 16 stable Minecraft versions: 1.21.1–1.21.11, 26.1, 26.1.1, 26.1.2, 26.2, and 26.3. Each `1.2.0+<game>` JAR works on both the client and server for its named version.
+- Added a dependency matrix, per-target build output, and a PowerShell helper that prepares `dist/<game>/` with the mod JAR and SHA-256 checksum.
+- Adapted server clocks, saved data, networking, rendering, and settings APIs during the build, while keeping shared source code and the existing day-counting behavior.
+- Added one-time import of the 1.21.x world counter when opening an upgraded world in 26.x. Existing modern data takes precedence; the original legacy file is preserved.
+- Kept independent EN/RU settings, optional Mod Menu integration, and JSON configuration without Mod Menu.
+- Prepared 16 installable JARs, a SHA-256 manifest, and `daycounter-1.2.0-all-versions.zip` with per-game folders.
+- Passed all 16 builds, 1,063 JUnit test executions, 32 server probes, 32 client probes, and all 16 JAR content/metadata audits. Probes initialize the release JAR through Fabric Knot and invoke mod entry points; they do not run the game loop. Full gameplay and FPS remain untested. See [compatibility](docs/compatibility.md) and [validation scope](docs/development.md#validation).
+
+### Русский
+
+- Добавлены отдельные сборки для 16 стабильных версий Minecraft: 1.21.1–1.21.11, 26.1, 26.1.1, 26.1.2, 26.2 и 26.3. Каждый JAR `1.2.0+<версия игры>` подходит клиенту и серверу указанной версии.
+- Добавлены таблица зависимостей, отдельные результаты сборки и PowerShell-скрипт подготовки `dist/<версия игры>/` с JAR и контрольной суммой SHA-256.
+- Серверные часы, сохранение, сеть, отрисовка и настройки адаптируются при сборке. Общий исходный код и поведение счётчика сохранены.
+- При открытии обновлённого мира в 26.x однократно импортируется счётчик 1.21.x. Уже существующие современные данные имеют приоритет; старый файл сохраняется.
+- Сохранены независимый выбор EN/RU, необязательный Mod Menu и настройка через JSON без него.
+- Подготовлены 16 установочных JAR, файл контрольных сумм SHA-256 и `daycounter-1.2.0-all-versions.zip` с папками версий.
+- Прошли все 16 сборок, 1063 запуска JUnit-тестов, 32 серверные и 32 клиентские проверки, а также проверка содержимого и метаданных всех 16 JAR. Пробы инициализируют готовый JAR через Fabric Knot и вызывают точки входа мода без игрового цикла. Полноценная игра и FPS ещё не проверены. См. [совместимость](docs/compatibility.md#русский) и [границы проверок](docs/development.md#русский).
+
 ## 1.1.0+26.3 — 2026-11-04
 
 - Added a compact **EN/RU** button in the top-right corner of settings.

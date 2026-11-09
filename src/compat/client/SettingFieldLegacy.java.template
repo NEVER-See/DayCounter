@@ -1,0 +1,100 @@
+package dev.daycounter.ui;
+
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.network.chat.Component;
+
+/** Centered, shadow-free field for versions before EditBox gained those options. */
+final class SettingField extends EditBox {
+    private static final int LIMIT = 16;
+    private final Font fieldFont;
+    private int displayStart, selectionEnd;
+    private long focusedAt;
+    boolean valid = true;
+
+    SettingField(Font font, int x, int y, int width, Component label) {
+        super(font, x, y, width, 22, label);
+        fieldFont = font;
+        setBordered(false);
+        setTextColor(0xfff3e6c8);
+        setTextColorUneditable(0xff797e85);
+        setMaxLength(LIMIT);
+    }
+
+    // Vanilla retains all keyboard editing, clipboard, validation and narration behavior.
+    // Its cursor/selection setters also let this renderer track the visible text window.
+    @Override public void setCursorPosition(int position) {
+        super.setCursorPosition(position);
+        scrollToPosition(getCursorPosition());
+    }
+
+    @Override public void setHighlightPos(int position) {
+        super.setHighlightPos(position);
+        selectionEnd = Math.max(0, Math.min(position, getValue().length()));
+        scrollToPosition(selectionEnd);
+    }
+
+    @Override public void setFocused(boolean focused) {
+        if (focused && !isFocused()) focusedAt = System.nanoTime();
+        super.setFocused(focused);
+    }
+
+    private void scrollToPosition(int position) {
+        if (fieldFont == null) return;
+        String text = getValue();
+        displayStart = Math.min(displayStart, text.length());
+        int end = displayStart + fieldFont.plainSubstrByWidth(text.substring(displayStart), getInnerWidth()).length();
+        if (position == displayStart) {
+            displayStart -= fieldFont.plainSubstrByWidth(text, getInnerWidth(), true).length();
+        }
+        if (position > end) displayStart += position - end;
+        else if (position <= displayStart) displayStart = position;
+        displayStart = Math.max(0, Math.min(displayStart, text.length()));
+    }
+
+    private String visibleText() {
+        displayStart = Math.min(displayStart, getValue().length());
+        return fieldFont.plainSubstrByWidth(getValue().substring(displayStart), getInnerWidth());
+    }
+
+    private int textX(String visible) { return getX() + (getWidth() - fieldFont.width(visible)) / 2; }
+
+    @Override public void onClick(double mouseX, double mouseY) {
+        String visible = visibleText();
+        int offset = (int) Math.floor(mouseX) - textX(visible);
+        int position = displayStart + fieldFont.plainSubstrByWidth(visible, Math.max(0, offset)).length();
+        moveCursorTo(position, Screen.hasShiftDown());
+    }
+
+    @Override public void renderWidget(GuiGraphics g, int mouseX, int mouseY, float delta) {
+        if (!isVisible()) return;
+        int edge = !active ? 0xff414348 : !valid ? 0xffdc7a7a : isFocused() ? UiDraw.GOLD : 0xff6b6a60;
+        UiDraw.panel(g, getX(), getY(), getWidth(), getHeight(), 4, edge, active ? 0xff1a1c20 : 0xff222429);
+        String visible = visibleText();
+        int x = textX(visible), y = getY();
+        int cursor = getCursorPosition() - displayStart;
+        int selection = Math.max(0, Math.min(selectionEnd - displayStart, visible.length()));
+        boolean cursorInView = cursor >= 0 && cursor <= visible.length();
+        boolean insert = getCursorPosition() < getValue().length() || getValue().length() >= LIMIT;
+        int color = active ? 0xfff3e6c8 : 0xff797e85;
+        int caretX = x + fieldFont.width(visible.substring(0, Math.max(0, Math.min(cursor, visible.length()))));
+        if (!insert && cursorInView && !visible.isEmpty()) caretX++;
+
+        g.pose().pushPose();
+        g.pose().translate(0, (getHeight() - 9) / 2f, 0);
+        g.drawString(fieldFont, visible, x, y, color, false);
+        if (selection != cursor) {
+            int selectionX = x + fieldFont.width(visible.substring(0, selection)) - 1;
+            int first = Math.min(caretX, selectionX), last = Math.max(caretX, selectionX);
+            g.fill(RenderType.guiTextHighlight(), first, y - 1, Math.min(getX() + getWidth(), last), y + 10, 0xff0000ff);
+        }
+        if (isFocused() && cursorInView && ((System.nanoTime() - focusedAt) / 300_000_000L & 1) == 0) {
+            if (insert) g.fill(caretX, y - 1, caretX + 1, y + 10, color);
+            else g.drawString(fieldFont, "_", caretX, y, color, false);
+        }
+        g.pose().popPose();
+    }
+}

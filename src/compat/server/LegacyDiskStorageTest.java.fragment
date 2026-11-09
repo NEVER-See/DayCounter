@@ -1,0 +1,35 @@
+    @Test
+    void legacyStorageReloadsTheSavedDay(@org.junit.jupiter.api.io.TempDir java.nio.file.Path directory) {
+        net.minecraft.SharedConstants.tryDetectVersion();
+        // Fabric accepts null data-fix types through its object-builder mixin.
+        // Plain JUnit has no mixins; an identity fixer reproduces unchanged NBT.
+        com.mojang.datafixers.DataFixer identityFixer = new com.mojang.datafixers.DataFixer() {
+            @Override
+            public <T> com.mojang.serialization.Dynamic<T> update(
+                    com.mojang.datafixers.DSL.TypeReference type,
+                    com.mojang.serialization.Dynamic<T> input, int oldVersion, int newVersion) {
+                return input;
+            }
+
+            @Override
+            public com.mojang.datafixers.schemas.Schema getSchema(int versionKey) {
+                throw new UnsupportedOperationException("No schemas needed for this saved-data round trip");
+            }
+        };
+        java.util.function.Supplier<net.minecraft.world.level.storage.DimensionDataStorage> createStorage = () ->
+                new net.minecraft.world.level.storage.DimensionDataStorage(
+                        directory.toFile(), identityFixer, net.minecraft.core.RegistryAccess.EMPTY) {
+                    @Override
+                    public net.minecraft.nbt.CompoundTag readTagFromDisk(String id,
+                            net.minecraft.util.datafix.DataFixTypes type, int version) throws java.io.IOException {
+                        return super.readTagFromDisk(id,
+                                type == null ? net.minecraft.util.datafix.DataFixTypes.LEVEL : type, version);
+                    }
+                };
+        net.minecraft.world.level.storage.DimensionDataStorage first = createStorage.get();
+        DayCounterData data = first.computeIfAbsent(DayCounterData.TYPE, "daycounter_days");
+        assertTrue(data.sleep(13_000, 24_000));
+        first.save();
+        net.minecraft.world.level.storage.DimensionDataStorage reopened = createStorage.get();
+        assertEquals(2, reopened.computeIfAbsent(DayCounterData.TYPE, "daycounter_days").day());
+    }

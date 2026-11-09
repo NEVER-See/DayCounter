@@ -21,7 +21,7 @@ public final class DayCounterData extends SavedData {
     }
 
     public static DayCounterData get(MinecraftServer server) {
-        return server.overworld().getDataStorage().computeIfAbsent(TYPE);
+        return LegacyDayData.getOrCreate(server);
     }
 
     public long day() {

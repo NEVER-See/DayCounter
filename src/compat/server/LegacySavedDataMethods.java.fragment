@@ -1,0 +1,9 @@
+    static DayCounterData load(CompoundTag tag, HolderLookup.Provider registries) {
+        return new DayCounterData(tag.getLong("day"));
+    }
+
+    @Override
+    public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
+        tag.putLong("day", day());
+        return tag;
+    }

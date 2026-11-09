@@ -1,0 +1,91 @@
+// Keep the approved UI in src/client canonical; adapt only versioned Minecraft APIs.
+// Generated sources are build outputs, so each target compiles its real API calls.
+ext.transformClientSource = { String relativePath, String original, String minecraftVersion ->
+    if (minecraftVersion == '26.3') return original
+
+    boolean legacy = minecraftVersion.startsWith('1.21.')
+    int patch = legacy ? minecraftVersion.tokenize('.')[2].toInteger() : Integer.MAX_VALUE
+    boolean beforeGuiSplit = legacy || minecraftVersion.startsWith('26.1')
+    String source = original.replace('\r\n', '\n')
+    if (legacy && patch < 6 && relativePath.endsWith('SettingField.java')) {
+        return file('src/compat/client/SettingFieldLegacy.java.template').getText('UTF-8')
+    }
+
+    if (beforeGuiSplit) {
+        source = source.replace('mc.gui.screen()', 'mc.screen')
+                .replace('mc.gui.hud.isHidden()', 'mc.options.hideGui')
+                .replace('minecraft.gui.setScreen(', 'minecraft.setScreen(')
+    }
+
+    if (legacy) {
+        source = source.replace('GuiGraphicsExtractor', 'GuiGraphics')
+                .replace('extractRenderState', 'render')
+                .replace('extractBackground', 'renderBackground')
+                .replace('extractWidgetRenderState', 'renderWidget')
+                .replace('extractContents', patch >= 11 ? 'renderContents' : 'renderWidget')
+                .replace('.centeredText(', '.drawCenteredString(')
+                .replace('g.text(', 'g.drawString(')
+                .replace('graphics.text(', 'graphics.drawString(')
+                .replace('g.outline(', patch == 9 || patch == 10 ? 'UiDraw.outline(g, ' : 'g.renderOutline(')
+
+        if ((patch == 9 || patch == 10) && relativePath.endsWith('UiDraw.java')) {
+            // These versions defer submitOutline without retaining the current pose.
+            // Four fills keep focus outlines aligned with the uniformly scaled panel.
+            int end = source.lastIndexOf('}')
+            source = source.substring(0, end) + '''    static void outline(GuiGraphics g, int x, int y, int w, int h, int color) {
+        g.fill(x, y, x + w, y + 1, color);
+        g.fill(x, y + h - 1, x + w, y + h, color);
+        g.fill(x, y + 1, x + 1, y + h - 1, color);
+        g.fill(x + w - 1, y + 1, x + w, y + h - 1, color);
+    }
+''' + source.substring(end)
+        }
+        if (relativePath.endsWith('DayCounterSettingsScreen.java')) {
+            // Older Screen.render invokes renderBackground during super.render. Paint
+            // the tint before the panel transform so it cannot obscure the contents.
+            source = source.replace('        g.fill(0, 0, width, height, 0xb014161a);', '')
+            source = source.replace('public void render(GuiGraphics g, int mouseX, int mouseY, float delta) {',
+                    'public void render(GuiGraphics g, int mouseX, int mouseY, float delta) {\n        g.fill(0, 0, width, height, 0xb014161a);')
+        }
+        if (patch < 9) {
+            source = source.replace('onPress(net.minecraft.client.input.InputWithModifiers input)', 'onPress()')
+                    .replace('import net.minecraft.client.input.MouseButtonEvent;\n', '')
+            if (relativePath.endsWith('DayCounterSettingsScreen.java')) {
+                int start = source.indexOf('    private MouseButtonEvent local(')
+                int end = source.indexOf('    @Override public void mouseMoved(', start)
+                if (start < 0 || end < 0) throw new GradleException('The settings input adapter must be updated for the canonical source.')
+                source = source.substring(0, start) + '''    @Override public boolean mouseClicked(double x, double y, int button) {
+        return super.mouseClicked(localX(x), localY(y), button);
+    }
+    @Override public boolean mouseReleased(double x, double y, int button) {
+        return super.mouseReleased(localX(x), localY(y), button);
+    }
+    @Override public boolean mouseDragged(double x, double y, int button, double dx, double dy) {
+        return super.mouseDragged(localX(x), localY(y), button, dx / panelScale, dy / panelScale);
+    }
+''' + source.substring(end)
+            }
+        }
+
+        if (relativePath.endsWith('DayCounterClient.java')) {
+            // Available throughout 1.21.x, including early Fabric API releases;
+            // removed in 26.1. The HUD itself explicitly respects the hidden flag.
+            source = source.replace('import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;',
+                    'import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;')
+            source = source.replaceAll(/HudElementRegistry\.addLast\([^\n]*DayCounterHud::extract\);/,
+                    'HudRenderCallback.EVENT.register(DayCounterHud::extract);')
+        }
+        if (patch < 6) {
+            // Old Font treats alpha values 0..3 as opaque; avoid a final fade flash.
+            source = source.replace('opacity <= .003', 'opacity < 4.0 / 255')
+            source = source.replace('.pushMatrix()', '.pushPose()').replace('.popMatrix()', '.popPose()')
+            source = source.replaceAll(/(\.pose\(\)\.translate\()([^\n]*)(\);)/) { all, prefix, args, suffix ->
+                prefix + args + ', 0' + suffix
+            }
+            source = source.replaceAll(/(\.pose\(\)\.scale\()([^\n]*)(\);)/) { all, prefix, args, suffix ->
+                prefix + args + ', 1f' + suffix
+            }
+        }
+    }
+    return source
+}

@@ -1,0 +1,97 @@
+// Keep 26.3 as the canonical source and adapt only verified API boundaries.
+// The root build feeds every common/test Java source through this transform.
+def replaceServerRequired = { String source, String before, String after ->
+    if (!source.contains(before) || source.indexOf(before) != source.lastIndexOf(before)) {
+        throw new GradleException("Server compatibility source changed: expected one occurrence of ${before}")
+    }
+    source.replace(before, after)
+}
+
+def serverTemplate = { String name ->
+    file("src/compat/server/${name}").getText('UTF-8').replace('\r\n', '\n')
+}
+
+ext.serverMixinNames = { String mcVersion ->
+    mcVersion.startsWith('1.21.')
+            ? ['ServerLevelMixin']
+            : ['ServerClockManagerMixin', 'ServerLevelMixin']
+}
+
+ext.transformServerSource = { String relativePath, String source, String mcVersion ->
+    String path = relativePath.replace('\\', '/')
+    source = source.replace('\r\n', '\n')
+    if (['26.1', '26.1.1', '26.1.2', '26.2'].contains(mcVersion)) {
+        if (path.endsWith('/mixin/ServerClockManagerMixin.java')) {
+            source = replaceServerRequired(source,
+                    'public abstract ServerClockManager.ServerClockInstance getInstance(Holder<WorldClock> clock);',
+                    'public abstract long getTotalTicks(Holder<WorldClock> clock);')
+            return source.replace('getInstance(daycounter$overworldClock).totalTicks()',
+                    'getTotalTicks(daycounter$overworldClock)')
+        }
+        if (path.endsWith('/mixin/ServerLevelMixin.java')) {
+            source = replaceServerRequired(source,
+                    ')Lnet/minecraft/world/clock/ServerClockManager$MoveResult;', ')Z')
+            source = source.replace('ServerClockManager.MoveResult', 'boolean')
+                    .replace('Operation<boolean>', 'Operation<Boolean>')
+                    .replace('result == boolean.MOVED', 'result')
+                    .replace('clocks.getInstance(clock).totalTicks()', 'clocks.getTotalTicks(clock)')
+        }
+        return source
+    }
+    if (!mcVersion.startsWith('1.21.')) {
+        return source
+    }
+    int patch = Integer.parseInt(mcVersion.substring('1.21.'.length()))
+
+    if (path.endsWith('/server/LegacyDayData.java') || path.endsWith('/server/LegacyDayDataTest.java')) {
+        return null
+    }
+    if (path.endsWith('/mixin/ServerClockManagerMixin.java')) {
+        return null
+    }
+    if (path.endsWith('/mixin/ServerLevelMixin.java')) {
+        return serverTemplate('ServerLevelMixin.java.template')
+    }
+    if (path.endsWith('/DayCounter.java')) {
+        return replaceServerRequired(source, 'PayloadTypeRegistry.clientboundPlay()',
+                'PayloadTypeRegistry.playS2C()')
+    }
+    if (path.endsWith('/server/DayCounterData.java')) {
+        source = replaceServerRequired(source, 'return LegacyDayData.getOrCreate(server);',
+                'return server.overworld().getDataStorage().computeIfAbsent(TYPE);')
+        source = source.replaceAll('import net\\.minecraft\\.resources\\.(Identifier|ResourceLocation);\\n', '')
+        if (patch <= 4) {
+            source = replaceServerRequired(source, 'import com.mojang.serialization.Codec;',
+                    'import com.mojang.serialization.Codec;\nimport net.minecraft.core.HolderLookup;\nimport net.minecraft.nbt.CompoundTag;')
+            source = replaceServerRequired(source, 'import net.minecraft.world.level.saveddata.SavedDataType;\n', '')
+            def declaration = source =~ /(?s)    public static final SavedDataType<DayCounterData> TYPE = new SavedDataType<>\(.*?\);/
+            if (declaration.count != 1) {
+                throw new GradleException('Expected one canonical DayCounterData.TYPE declaration')
+            }
+            source = declaration.replaceFirst(java.util.regex.Matcher.quoteReplacement(
+                    '    public static final SavedData.Factory<DayCounterData> TYPE = new SavedData.Factory<>(\n' +
+                    '            () -> new DayCounterData(1), DayCounterData::load, null);'))
+            source = replaceServerRequired(source, '.computeIfAbsent(TYPE)',
+                    '.computeIfAbsent(TYPE, "daycounter_days")')
+            source = replaceServerRequired(source, '    private final DayCount count;',
+                    serverTemplate('LegacySavedDataMethods.java.fragment') + '\n    private final DayCount count;')
+        } else {
+            source = source.replaceAll('(Identifier|ResourceLocation)\\.fromNamespaceAndPath\\("daycounter", "days"\\)',
+                    '"daycounter_days"')
+        }
+        return source
+    }
+    if (path.endsWith('/server/DayCounterDataTest.java')) {
+        if (patch <= 4) {
+            int end = source.lastIndexOf('}')
+            source = source.substring(0, end) + serverTemplate('LegacySavedDataTests.java.fragment') +
+                    (patch == 1 ? serverTemplate('LegacyDiskStorageTest.java.fragment') : '') + source.substring(end)
+        } else {
+            source = replaceServerRequired(source, 'DayCounterData.TYPE.constructor().get()',
+                    'createFromSavedDataType()')
+            int end = source.lastIndexOf('}')
+            source = source.substring(0, end) + serverTemplate('SavedDataTypeFactoryTest.java.fragment') + source.substring(end)
+        }
+    }
+    return source
+}

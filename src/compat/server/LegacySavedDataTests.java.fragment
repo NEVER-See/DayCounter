@@ -1,0 +1,18 @@
+    @Test
+    void legacyNbtStorageRetainsFullLongCount() {
+        DayCounterData original = new DayCounterData(Long.MAX_VALUE - 1);
+        net.minecraft.nbt.CompoundTag tag = original.save(new net.minecraft.nbt.CompoundTag(), null);
+        DayCounterData loaded = DayCounterData.load(tag, null);
+        assertEquals(Long.MAX_VALUE - 1, loaded.day());
+        assertTrue(loaded.sleep(13_000, 24_000));
+        assertEquals(Long.MAX_VALUE, loaded.day());
+        assertTrue(loaded.isDirty());
+    }
+
+    @Test
+    void legacyMissingAndInvalidNbtStartAtOne() {
+        net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
+        assertEquals(1, DayCounterData.load(tag, null).day());
+        tag.putLong("day", -7);
+        assertEquals(1, DayCounterData.load(tag, null).day());
+    }

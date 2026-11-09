@@ -1,0 +1,6 @@
+    private static DayCounterData createFromSavedDataType() {
+        // The 1.21.x API exposes either a context-aware Function or a Supplier.
+        Object constructor = DayCounterData.TYPE.constructor();
+        return (DayCounterData) (constructor instanceof java.util.function.Supplier<?> supplier
+                ? supplier.get() : ((java.util.function.Function<?, ?>) constructor).apply(null));
+    }

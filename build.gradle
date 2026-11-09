@@ -1,35 +1,115 @@
-plugins { id 'net.fabricmc.fabric-loom' version '1.19.3' }
+import groovy.json.JsonSlurper
+import groovy.json.JsonOutput
+
+plugins { id 'net.fabricmc.fabric-loom' version '1.19.3' apply false }
+
+def targetVersion = providers.gradleProperty('minecraftVersion').getOrElse('26.3')
+def targets = new JsonSlurper().parse(file('gradle/targets.json'))
+if (!targets.containsKey(targetVersion)) throw new GradleException("Unsupported Minecraft version: ${targetVersion}")
+def target = targets[targetVersion]
+def remapped = targetVersion.startsWith('1.')
+apply plugin: remapped ? 'net.fabricmc.fabric-loom-remap' : 'net.fabricmc.fabric-loom'
+for (script in ['server-compat.gradle', 'client-compat.gradle']) {
+    if (file("gradle/${script}").exists()) apply from: "gradle/${script}"
+}
 
 group = 'dev.daycounter'
-version = '1.1.0+26.3'
+version = "1.2.0+${targetVersion}"
 base { archivesName = 'daycounter' }
+layout.buildDirectory = layout.projectDirectory.dir("build/${targetVersion}")
 repositories {
     mavenCentral()
     maven { url 'https://maven.terraformersmc.com/releases/' }
 }
 loom {
+    enableTransitiveAccessWideners.set(false)
+    interfaceInjection { enableDependencyInterfaceInjection.set(false) }
     splitEnvironmentSourceSets()
     mods { daycounter { sourceSet sourceSets.main; sourceSet sourceSets.client } }
     runs {
-        client { runDir 'run/client' }
-        server { runDir 'run/server' }
+        client { runDir "run/${targetVersion}/client" }
+        server { runDir "run/${targetVersion}/server" }
     }
 }
+def apiVersion = providers.gradleProperty('fabricApiVersion').getOrElse(target.api)
 dependencies {
-    minecraft 'com.mojang:minecraft:26.3'
-    implementation 'net.fabricmc:fabric-loader:0.20.1'
-    implementation 'net.fabricmc.fabric-api:fabric-api:0.165.0+26.3'
-    compileOnly 'com.terraformersmc:modmenu:21.0.0'
+    minecraft "com.mojang:minecraft:${targetVersion}"
+    if (remapped) mappings loom.officialMojangMappings()
+    add(remapped ? 'modImplementation' : 'implementation', 'net.fabricmc:fabric-loader:0.20.1')
+    add(remapped ? 'modImplementation' : 'implementation', "net.fabricmc.fabric-api:fabric-api:${apiVersion}")
+    add(remapped ? 'modCompileOnly' : 'compileOnly', "com.terraformersmc:modmenu:${target.menu}")
     testImplementation platform('org.junit:junit-bom:5.14.1')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
+
+def generated = layout.buildDirectory.dir('generated/sources')
+def olderIdentifier = targetVersion.startsWith('1.21.') && targetVersion.substring(5).toInteger() < 11
+def generateCompatibility = tasks.register('generateCompatibility') {
+    inputs.files(fileTree('src/main/java'), fileTree('src/client/java'), fileTree('src/test/java'), fileTree('src/compat'), fileTree('gradle').matching { include '*-compat.gradle' })
+    inputs.property('minecraftVersion', targetVersion)
+    outputs.dir(generated)
+    doLast {
+        def out = generated.get().asFile
+        delete(out)
+        ['main', 'client', 'test'].each { sourceSetName ->
+            def sourceRoot = file("src/${sourceSetName}/java")
+            fileTree(sourceRoot).matching { include '**/*.java' }.each { sourceFile ->
+                def relative = sourceRoot.toPath().relativize(sourceFile.toPath()).toString().replace('\\', '/')
+                String content = sourceFile.getText('UTF-8')
+                if (sourceSetName == 'client' && project.ext.has('transformClientSource')) {
+                    content = project.ext.transformClientSource(relative, content, targetVersion)
+                } else if (sourceSetName != 'client' && project.ext.has('transformServerSource')) {
+                    content = project.ext.transformServerSource(relative, content, targetVersion)
+                }
+                if (content != null) {
+                    if (olderIdentifier) content = content.replace('Identifier', 'ResourceLocation')
+                    def destination = new File(out, "${sourceSetName}/${relative}")
+                    destination.parentFile.mkdirs()
+                    destination.setText(content, 'UTF-8')
+                }
+            }
+        }
+    }
+}
+sourceSets.main.java.setSrcDirs([generated.map { it.dir('main') }])
+sourceSets.client.java.setSrcDirs([generated.map { it.dir('client') }])
+sourceSets.test.java.setSrcDirs([generated.map { it.dir('test') }])
+tasks.withType(JavaCompile).configureEach {
+    dependsOn generateCompatibility
+    options.release = target.java as int
+    options.encoding = 'UTF-8'
+}
+tasks.matching { it.name == 'sourcesJar' }.configureEach { dependsOn generateCompatibility }
 processResources {
     inputs.property 'version', project.version
-    filesMatching('fabric.mod.json') { expand 'version': project.version }
+    inputs.property 'minecraftVersion', targetVersion
+    inputs.property 'javaVersion', target.java
+    inputs.property 'loaderMinimum', target.loaderMin
+    inputs.property 'apiMinimum', target.apiFirst
+    filesMatching('fabric.mod.json') {
+        filter { line -> line.replace('${version}', project.version.toString())
+                .replace('"fabricloader": ">=0.20.1"', "\"fabricloader\": \">=${target.loaderMin}\"")
+                .replace('"fabric-api": "*"', "\"fabric-api\": \">=${target.apiFirst}\"")
+                .replace('"minecraft": "26.3"', "\"minecraft\": \"${targetVersion}\"")
+                .replace('"java": ">=25"', "\"java\": \">=${target.java}\"")
+                .replace('"modmenu": ">=21.0.0"', "\"modmenu\": \">=${target.menu}\"") }
+    }
+    filesMatching('daycounter.mixins.json') {
+        filter { line -> remapped && line.contains('"ServerClockManagerMixin"') ? '' : line.replace('JAVA_25', "JAVA_${target.java}") }
+    }
 }
-tasks.withType(JavaCompile).configureEach { options.release = 25; options.encoding = 'UTF-8' }
 test { useJUnitPlatform(); systemProperty 'java.io.tmpdir', System.getProperty('java.io.tmpdir') }
-java { withSourcesJar(); sourceCompatibility = JavaVersion.VERSION_25; targetCompatibility = JavaVersion.VERSION_25 }
-
+java { withSourcesJar(); sourceCompatibility = target.java; targetCompatibility = target.java }
 jar { from('LICENSE') }
+
+tasks.register('prepareTarget') {
+    doLast {
+        ['main','client','test'].each { setName ->
+            def destination = layout.buildDirectory.file("${setName}-classpath.txt").get().asFile
+            destination.parentFile.mkdirs()
+            destination.setText(sourceSets[setName].compileClasspath.asPath, 'UTF-8')
+        }
+        println "Prepared Minecraft ${targetVersion}; Fabric API ${apiVersion}"
+    }
+}

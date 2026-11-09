@@ -1,109 +1,195 @@
 # Development
 
-[README](../README.md) · [Configuration](configuration.md) · [Русский](#русский)
+[README](../README.md) · [Compatibility](compatibility.md) · [Configuration](configuration.md) · [Русский](#русский)
 
-## Build
+## Build one Minecraft target
 
-Use a **Java 25 JDK**. The repository includes the Gradle wrapper; a separate Gradle installation is unnecessary. Set `JAVA_HOME` to the JDK if your default Java version differs.
+Use **JDK 25 to build every target**. The wrapper supplies Gradle; a separate Gradle installation is unnecessary. Set `JAVA_HOME` to the JDK if necessary. Runtime Java is separate: the 1.21.x artifacts target Java 21, while the 26.x artifacts target Java 25.
 
-From the repository root, run:
+From the repository root:
 
 ```sh
-./gradlew build
+./gradlew build -PminecraftVersion=1.21.1
 ```
 
 On Windows PowerShell:
 
 ```powershell
-.\gradlew.bat build
+.\gradlew.bat build -PminecraftVersion=1.21.1
 ```
 
-The first build downloads Gradle and the declared dependencies. The resulting universal mod JAR is `build/libs/daycounter-1.1.0+26.3.jar`; `build/libs/daycounter-1.1.0+26.3-sources.jar` contains the source. Install the regular JAR in Minecraft, not the sources JAR.
+Replace `1.21.1` with an exact version from [gradle/targets.json](../gradle/targets.json). Omitting `-PminecraftVersion` selects **26.3**. Unsupported targets fail early. The first build downloads Gradle and dependencies.
 
-Useful tasks:
+For a chosen `<game>`, output is:
+
+- `build/<game>/libs/daycounter-1.2.0+<game>.jar` — installable client/server mod.
+- `build/<game>/libs/daycounter-1.2.0+<game>-sources.jar` — source archive; not for installation.
+- `build/<game>/reports/tests/test/index.html` — test report.
+
+For example, the command above produces `build/1.21.1/libs/daycounter-1.2.0+1.21.1.jar`.
 
 | Task | Purpose |
 | --- | --- |
-| `./gradlew test` | Run the JUnit tests. |
-| `./gradlew build` | Compile, test, and package the mod and source archive. |
-| `./gradlew runClient` | Start a development client in `run/client`. |
-| `./gradlew runServer` | Start a development server in `run/server`. |
+| `./gradlew test -PminecraftVersion=1.21.1` | Run the target's JUnit tests. |
+| `./gradlew build -PminecraftVersion=1.21.1` | Compile, test, and package its mod and source archive. |
+| `./gradlew runClient -PminecraftVersion=1.21.1` | Start a client in `run/1.21.1/client`. |
+| `./gradlew runServer -PminecraftVersion=1.21.1` | Start a server in `run/1.21.1/server`. |
 
-Use `gradlew.bat` instead of `./gradlew` on Windows. A development server requires the usual Minecraft EULA acceptance. Use separate test worlds for gameplay validation.
+Use `gradlew.bat` on Windows. A development server requires the usual Minecraft EULA acceptance. Use separate test worlds. Mod Menu is compile-only: add the target's compatible Mod Menu JAR to `run/<game>/client/mods` to open settings in the development client.
 
-Build versions are declared in `build.gradle` and `gradle/wrapper/gradle-wrapper.properties`:
+## PowerShell helpers and release files
+
+The optional helper runs the same wrapper with project-local caches by default:
+
+```powershell
+.\build.ps1 -MinecraftVersion '1.21.1'
+.\build.ps1 -MinecraftVersion '26.3' -Tasks @('test')
+```
+
+`-JavaHome` selects a JDK 25 installation; `-CacheRoot` selects the Gradle cache and temporary-data directory instead of `.cache`. `-Offline` reuses already downloaded dependencies.
+
+To build all 16 targets and prepare their installable JARs and SHA-256 checksums:
+
+```powershell
+.\build-matrix.ps1
+```
+
+To prepare a subset:
+
+```powershell
+.\build-matrix.ps1 -MinecraftVersions '1.21.1','26.3'
+```
+
+The matrix helper accepts the same `-JavaHome`, `-CacheRoot`, and `-Offline` options. It writes `dist/<game>/daycounter-1.2.0+<game>.jar` and `dist/<game>/SHA256SUMS.txt` for each completed target. It does not publish a release. GitHub release `v1.2.0` has 18 assets: 16 installable JARs, one aggregate `SHA256SUMS.txt`, and `daycounter-1.2.0-all-versions.zip` preserving the per-game folders. See [release files](compatibility.md#release-files).
+
+## Dependencies and compatibility code
+
+[gradle/targets.json](../gradle/targets.json) defines each Minecraft version's runtime Java, minimum Loader, selected Fabric API, lower Fabric API validation endpoint, and optional Mod Menu version. Generated mod metadata requires `fabricloader >= loaderMin` and `fabric-api >= apiFirst` for the chosen target. [build.gradle](../build.gradle) pins the shared build dependencies:
 
 | Component | Version |
 | --- | --- |
-| Minecraft | `26.3` |
-| Java | `25` |
-| Fabric Loader | `0.20.1` |
-| Fabric API | `0.165.0+26.3` |
+| Build JDK | `25` |
+| Fabric Loader used by the build | `0.20.1` |
 | Fabric Loom | `1.19.3` |
 | Gradle wrapper | `9.8.2` |
-| Mod Menu, optional | `21.0.0` |
 | JUnit | `5.14.1` |
 
-Mod Menu is a compile-only integration. Add its compatible JAR to the development client's `run/client/mods` folder to open settings there.
+The [compatibility table](compatibility.md) contains the per-target dependencies. For an explicit Fabric API validation build, select a compatible version from that table:
+
+```sh
+./gradlew build -PminecraftVersion=1.21.1 -PfabricApiVersion=0.102.0+1.21.1
+```
+
+The canonical Java sources use **Minecraft 26.3** APIs. During `generateCompatibility`, [gradle/server-compat.gradle](../gradle/server-compat.gradle), [gradle/client-compat.gradle](../gradle/client-compat.gradle), and `src/compat/` adapt verified API differences for the selected target. Generated sources are written to `build/<game>/generated/sources/`; edit the canonical source or compatibility definitions, not generated files.
+
+Minecraft 1.21.x uses remapping with official Mojang mappings; 26.x uses the non-remapping build. Target selection happens at build time, so the shipped JAR has no runtime Minecraft-version dispatch overhead. Each JAR contains both common and client code for one exact Minecraft release. Dedicated servers load the common entry point without loading client rendering classes.
 
 ## Source layout
 
 | Path | Responsibility |
 | --- | --- |
 | `src/main/java/dev/daycounter/DayCounter.java` | Common entry point and event registration. |
-| `src/main/java/dev/daycounter/server/` | World day model, saved data, and server announcements. |
-| `src/main/java/dev/daycounter/mixin/` | Hooks for natural clock progression and successful sleep. |
+| `src/main/java/dev/daycounter/server/` | World day model, saved data, legacy migration, and announcements. |
+| `src/main/java/dev/daycounter/mixin/` | Natural clock progression and successful sleep hooks. |
 | `src/main/java/dev/daycounter/network/` | Day synchronization payload. |
-| `src/main/java/dev/daycounter/config/` | Defaults, validation, file persistence, editable settings, and sound catalog. |
-| `src/main/java/dev/daycounter/hud/` | Notification timing and layout calculations without rendering. |
+| `src/main/java/dev/daycounter/config/` | Defaults, validation, file persistence, settings editor, and sounds. |
+| `src/main/java/dev/daycounter/hud/` | Notification timing and layout without rendering. |
 | `src/client/java/dev/daycounter/` | Client initialization, HUD rendering, and settings UI. |
-| `src/main/resources/` | Mod metadata, mixin declarations, icons, and language resources. |
-| `src/test/java/` | Tests for the day model, persistence, synchronization, settings, timing, and layout. |
-
-The source and tests are public so the behavior can be inspected and reproduced. The common and client source sets are packaged into one JAR. Dedicated servers load the common entry point without loading client rendering classes.
+| `src/main/resources/` | Metadata, mixin declarations, icons, and language resources. |
+| `src/test/java/` | Shared behavior tests and migration tests. |
+| `src/compat/` | Build-time adaptations and target-specific test fragments. |
+| `gradle/` | Target matrix, compatibility transforms, and wrapper files. |
 
 ## Counting and runtime behavior
 
-The world counter begins at 1. The natural-clock hook compares the Overworld clock immediately before and after its normal tick, counting crossed dawn boundaries. The sleep hook handles successful transitions to the wake-up marker separately. Commands that change time occur outside these hooks and do not directly advance the counter. The next natural dawn still counts.
+The world count begins at 1. Natural-clock hooks compare the Overworld clock before and after its normal tick; successful sleep transitions are handled separately. Time commands do not directly advance the counter. The next natural dawn still counts.
 
-The server stores the count in Overworld saved data and sends it to compatible clients on joining and on a new day. Joining is a silent synchronization. The client clears its notification state when connecting or disconnecting, so a previous world's number is not carried across sessions.
+The server stores and synchronizes the count when a player joins and when a new day starts. Joining is silent. The client clears its notification state on connection changes. See [world data and migration](configuration.md#world-data-and-multiplayer) for storage and upgrades from 1.21.x.
 
-The HUD draws a small panel using Minecraft's font and sound resources. It uses elapsed time for animation and caches layout calculations. There are no additional timer threads, hardware polling, or external service requests. Multiplayer synchronization uses the existing game connection. This describes the implementation, not a guarantee of a particular FPS impact.
+The HUD uses Minecraft's font and sounds, elapsed time for animation, and cached layout calculations. It adds no timer threads, hardware polling, or external service requests; synchronization uses the game connection. Performance has not been measured, so no particular FPS impact is claimed.
 
 ## Validation
 
-The test suite covers day-count transitions, saved-data serialization, payload handling, configuration parsing and validation, editor Apply/Cancel behavior, notification timing, duplicate updates, and layout boundaries. Run `build` against the current checkout before distributing a modified JAR. Test reports are generated at `build/reports/tests/test/index.html`.
+Release **1.2.0** completed these checks on **2026-11-10**:
 
-Validation of version **1.1.0+26.3** completed a Gradle build and **64 tests** with no failures. Fabric loader probes loaded the common entry point on the server without client classes, loaded client entry points and UI classes on the client, and checked both server mixin transformations. These checks do not establish end-to-end gameplay behavior.
+| Check | Result |
+| --- | --- |
+| Gradle builds | **16/16 passed**. |
+| JUnit tests | **1,063 executions**: 64–70 per target, zero failures, errors, or skipped tests. |
+| Fabric Knot SERVER probes | **32/32 passed**: minimum and selected latest dependency pairs for all 16 targets. |
+| Fabric Knot CLIENT probes | **32/32 passed**: the same two pairs for all 16 targets. |
+| Release JAR audits | **16/16 passed**: metadata, Java class version, and packaged content. |
 
-Real-world multiplayer, sleep, world save/restart, full in-game UI interaction, and performance measurements have not yet been completed. In particular, no FPS claim is made. Input-method positioning in scaled numeric fields remains a known limitation.
+The tested pairs were **minimum Loader + minimum API** and **Loader 0.20.1 + selected latest API** from the [compatibility table](compatibility.md). Runtime probes used **Java 21 for 1.21.x** and **Java 25 for 26.x**. SHA-256 checks matched the tested JARs to the distributed files.
 
-For gameplay validation, check a fresh world and an existing world, natural dawn, sleep, forward and backward time commands, reconnecting, saving and restarting, a server without the mod, and clients with and without the mod. Exercise Apply/Cancel/Reset, both mod languages while Minecraft uses a different language, sound selection, and small windows. Record the exact version and environment with the results.
+Each probe initialized production **Fabric Knot in SERVER or CLIENT mode with the actual release JAR**, then explicitly invoked the mod entry points. Server probes checked hooks, saved-data persistence/reload, and legacy migration for 26.x. All latest client probes included Mod Menu and checked its settings-screen factory; minimum client probes used configurations with or without optional Mod Menu. Its dependency requirements can exceed DayCounter's minimums.
+
+The tests cover day transitions, saved-data serialization and migration, payload handling, configuration, Apply/Cancel behavior, notification timing, duplicate updates, and layout boundaries. Run `build` for each changed target before distributing it; reports are at `build/<game>/reports/tests/test/index.html`.
+
+**These checks did not invoke `Minecraft.main`, run the game loop, open a world or window, render the HUD, exercise input, play sounds, or measure FPS.** Full gameplay validation remains outstanding. It should cover fresh/upgraded worlds, dawn, sleep, time commands, reconnecting, world save/restart, multiplayer, Apply/Cancel/Reset, both mod languages, sound playback, and small windows. Input-method positioning in scaled numeric fields remains a known limitation.
 
 ## Русский
 
-### Сборка
+### Сборка одной версии
 
-Нужен **JDK 25**. Gradle устанавливать отдельно не требуется: используйте включённый wrapper. При необходимости укажите JDK через `JAVA_HOME`.
+Для сборки **всех вариантов нужен JDK 25**. Для запуска готового мода используется **Java 21 в Minecraft 1.21.x** или **Java 25 в 26.x**. Gradle устанавливать отдельно не нужно; при необходимости укажите JDK в `JAVA_HOME`.
 
-Из корня репозитория выполните `./gradlew build`, а в Windows PowerShell — `.\gradlew.bat build`. Первая сборка загрузит Gradle и зависимости. Результат: `build/libs/daycounter-1.1.0+26.3.jar`; исходники: `build/libs/daycounter-1.1.0+26.3-sources.jar`. В игру устанавливается обычный JAR.
+Из корня репозитория выполните:
 
-Задача `test` запускает тесты; `runClient` и `runServer` открывают тестовый клиент и сервер в `run/client` и `run/server`. Сервер требует стандартного принятия Minecraft EULA. Для экрана настроек в тестовом клиенте добавьте Mod Menu 21.0.0 в `run/client/mods`.
+```sh
+./gradlew build -PminecraftVersion=1.21.1
+```
 
-Версии зависимостей перечислены выше и закреплены в `build.gradle`; версия Gradle — в `gradle/wrapper/gradle-wrapper.properties`.
+В Windows PowerShell:
 
-### Устройство
+```powershell
+.\gradlew.bat build -PminecraftVersion=1.21.1
+```
 
-Общая часть в `src/main/java/dev/daycounter/` содержит счётчик, сохранение, сетевой пакет, настройки и расчёты уведомления. Клиентская часть в `src/client/java/dev/daycounter/` отвечает за отрисовку и экран настроек. Ресурсы находятся в `src/main/resources/`, тесты — в `src/test/java/`. Обе части упакованы в один JAR; выделенный сервер не загружает клиентскую отрисовку.
+Выберите точную версию из [gradle/targets.json](../gradle/targets.json). По умолчанию собирается **26.3**; неподдерживаемая версия отклоняется. Первая сборка загружает зависимости.
 
-Счётчик хранится в мире и синхронизируется при входе и наступлении нового дня. Естественный ход времени и сон обрабатываются отдельно от команд времени. При входе синхронизация бесшумная; при смене подключения клиент сбрасывает прежнее уведомление.
+Результат — `build/<версия игры>/libs/daycounter-1.2.0+<версия игры>.jar`; рядом создаётся архив `-sources.jar`. Для установки нужен обычный JAR. Отчёт тестов: `build/<версия игры>/reports/tests/test/index.html`.
 
-Мод использует шрифт и звуки Minecraft, небольшую панель и кэш расчётов расположения. Дополнительных потоков таймера, опроса оборудования и запросов к внешним сервисам нет. Обмен между клиентом и сервером идёт через игровое подключение. Конкретное влияние на FPS не заявляется.
+Вместо `build` доступны `test`, `runClient` и `runServer` с тем же `-PminecraftVersion`. Тестовые экземпляры создаются в `run/<версия игры>/client` и `run/<версия игры>/server`. Сервер требует принятия Minecraft EULA. Для экрана настроек добавьте совместимый Mod Menu в `run/<версия игры>/client/mods`.
+
+### PowerShell и подготовка релиза
+
+```powershell
+.\build.ps1 -MinecraftVersion '1.21.1'
+.\build-matrix.ps1
+.\build-matrix.ps1 -MinecraftVersions '1.21.1','26.3'
+```
+
+Первая команда собирает одну версию, вторая — все 16, третья — выбранные версии. `build.ps1` принимает `-Tasks`, например `@('test')`. Общие параметры: `-JavaHome` для JDK 25, `-CacheRoot` для кэша и временных данных вместо `.cache`, `-Offline` для работы с уже загруженными зависимостями.
+
+`build-matrix.ps1` сохраняет каждый готовый мод в `dist/<версия игры>/daycounter-1.2.0+<версия игры>.jar` и создаёт рядом `SHA256SUMS.txt`. Скрипт не публикует файлы. GitHub-релиз `v1.2.0` содержит 18 файлов: 16 JAR, общий `SHA256SUMS.txt` и `daycounter-1.2.0-all-versions.zip` с папками версий.
+
+### Зависимости и устройство
+
+[Таблица совместимости](compatibility.md#русский) формируется по [gradle/targets.json](../gradle/targets.json), включая минимальные версии Loader и API. Метаданные JAR требуют `fabricloader >= loaderMin` и `fabric-api >= apiFirst` для выбранной игры. Общие версии сборки: Fabric Loader 0.20.1, Loom 1.19.3, Gradle 9.8.2 и JUnit 5.14.1. Mod Menu необязателен и выбирается отдельно для каждой версии игры. Для проверки другой совместимой Fabric API добавьте, например, `-PfabricApiVersion=0.102.0+1.21.1` к сборке Minecraft 1.21.1.
+
+Общие исходники ориентированы на **26.3**. `gradle/server-compat.gradle`, `gradle/client-compat.gradle` и `src/compat/` адаптируют различия API во время сборки. Результаты в `build/<версия игры>/generated/sources/` создаются заново; изменяйте основной код или правила адаптации. Для 1.21.x выполняется remapping по официальным Mojang mappings; для 26.x используется сборка без remapping. Выбор версии не добавляет переключений во время работы игры.
+
+Общая логика находится в `src/main/java/dev/daycounter/`, клиентская — в `src/client/java/dev/daycounter/`, ресурсы — в `src/main/resources/`, тесты — в `src/test/java/`. Один JAR содержит обе части для конкретной версии Minecraft; выделенный сервер не загружает клиентскую отрисовку.
+
+Счётчик хранится в мире и синхронизируется при входе и наступлении нового дня. Естественный ход времени и сон обрабатываются отдельно от команд. Подробности хранения и переноса — в [руководстве по настройке](configuration.md#русский). Мод использует игровые шрифты, звуки и подключение; дополнительных потоков таймера, опроса оборудования и внешних запросов нет.
 
 ### Проверки и ограничения
 
-Тесты проверяют счётчик, сериализацию, сетевой пакет, конфигурацию, применение и отмену настроек, время уведомления и границы расположения. Перед распространением изменённого JAR запускайте `build`; отчёт появится в `build/reports/tests/test/index.html`.
+Для релиза **1.2.0** на **2026-11-10** выполнены:
 
-Для **1.1.0+26.3** прошли сборка и **64 теста** без ошибок. Проверены общий entrypoint на сервере без клиентских классов, клиентский entrypoint и классы интерфейса, преобразование обоих серверных mixin. Эти проверки не заменяют полный игровой тест. Полные проверки сети, сна, сохранения и перезапуска мира, работы всех элементов интерфейса и производительности ещё не завершены. Есть известное ограничение расположения IME в масштабированных числовых полях.
+| Проверка | Результат |
+| --- | --- |
+| Сборки Gradle | **16 из 16 прошли**. |
+| JUnit | **1063 запуска**: 64–70 на версию, без ошибок и пропусков. |
+| Fabric Knot SERVER | **32 из 32 прошли**: минимальная и последняя выбранная пара для каждой игры. |
+| Fabric Knot CLIENT | **32 из 32 прошли**: те же две пары для каждой игры. |
+| Готовые JAR | **16 из 16 прошли** проверку метаданных, версии Java-классов и содержимого. |
 
-Для игровой проверки используйте отдельные миры и сервер. Проверьте рассвет, сон, команды времени, переподключение, сохранение и перезапуск, отсутствие мода на сервере или клиенте, применение/отмену/сброс настроек, оба языка, звуки и небольшие окна. Сохраняйте результаты вместе с точной версией и параметрами среды.
+Проверены пары **минимальный Loader + минимальная API** и **Loader 0.20.1 + последняя выбранная API** из [таблицы совместимости](compatibility.md#русский). Пробы выполнялись на **Java 21 для 1.21.x** и **Java 25 для 26.x**. Контрольные суммы SHA-256 подтвердили соответствие проверенных JAR распространяемым файлам.
+
+Каждая проба инициализировала **Fabric Knot в режиме SERVER или CLIENT с настоящим релизным JAR**, затем явно вызывала точки входа мода. Серверные пробы проверяли hooks, сохранение и повторную загрузку данных, а для 26.x — перенос старого счётчика. Все клиентские пробы последних выбранных пар включали Mod Menu и проверку фабрики экрана настроек; минимальные пары проверялись с Mod Menu или без него. У дополнительного мода могут быть более высокие требования к зависимостям.
+
+Тесты охватывают счётчик, сохранение и миграцию, сеть, настройки, применение и отмену, время уведомления и расположение. Перед распространением изменённого JAR выполните `build` для соответствующих версий; отчёт находится в `build/<версия игры>/reports/tests/test/index.html`.
+
+**Эти проверки не вызывали `Minecraft.main`, не запускали игровой цикл, мир или окно, не проверяли отрисовку HUD, ввод, воспроизведение звука и FPS.** Полноценная игровая проверка ещё предстоит: новые и перенесённые миры, рассвет, сон, команды времени, переподключение, сохранение и перезапуск мира, сеть, применение/отмена/сброс настроек, языки, звуки и небольшие окна. Известно ограничение расположения IME в масштабированных числовых полях.

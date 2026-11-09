@@ -1,0 +1,33 @@
+package dev.daycounter.mixin;
+
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import dev.daycounter.server.DayCounterServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+
+/** Observe the two vanilla clock operations, never arbitrary command mutations. */
+@Mixin(ServerLevel.class)
+public abstract class ServerLevelMixin {
+    @WrapOperation(method = "tickTime", at = @At(value = "INVOKE", target =
+            "Lnet/minecraft/server/level/ServerLevel;setDayTime(J)V"))
+    private void daycounter$afterNaturalTick(ServerLevel level, long time, Operation<Void> original) {
+        long before = level.getDayTime();
+        original.call(level, time);
+        if (level.dimension() == Level.OVERWORLD) {
+            DayCounterServer.naturalTick(level.getServer(), before, level.getDayTime());
+        }
+    }
+
+    @WrapOperation(method = "tick", at = @At(value = "INVOKE", target =
+            "Lnet/minecraft/server/level/ServerLevel;setDayTime(J)V"))
+    private void daycounter$afterSleep(ServerLevel level, long time, Operation<Void> original) {
+        long before = level.getDayTime();
+        original.call(level, time);
+        if (level.dimension() == Level.OVERWORLD) {
+            DayCounterServer.sleep(level.getServer(), before, level.getDayTime());
+        }
+    }
+}
