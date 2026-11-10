@@ -2,6 +2,8 @@
 
 [README](../README.md) · [Compatibility](compatibility.md) · [Русский](#русский)
 
+This guide describes the upcoming **1.3.0** update.
+
 ## Settings screen
 
 Install the optional **Mod Menu** version listed for your Minecraft version in the [compatibility table](compatibility.md), then open **Mods → DayCounter → Configure**. Appearance and sound settings are local to each client; they do not alter the world's counter.
@@ -12,7 +14,7 @@ Install the optional **Mod Menu** version listed for your Minecraft version in t
 - The square **EN/RU** button in the top-right corner switches the settings language. English is the default. Apply also changes the day notification's language; Minecraft's own language is unaffected.
 - Selecting a sound previews it immediately. Saving the selection still requires Apply.
 
-With animation enabled, the notification fades in and out during the configured duration. Disabling animation makes the current day stay visible during gameplay; the duration field is then unused. The display is hidden while a screen is open or the HUD is hidden. Joining a world synchronizes the count silently: animated mode waits for the next new day, while persistent mode shows the received day.
+With animation enabled, a new-day notification fades in and out over the configured duration. Its icon plays once for 2.5 seconds and holds the last frame until the notification fades. With animation disabled, the current day stays visible during gameplay with a static PNG icon. The display is hidden while a screen is open or the HUD is hidden. Joining a world synchronizes the count silently: animated mode waits for the next new day, while persistent mode shows the received day.
 
 ## Configuration file
 
@@ -24,7 +26,7 @@ Default contents:
 {
   "durationSeconds": 8,
   "animationEnabled": true,
-  "scale": 1,
+  "scale": 1.5,
   "position": "TOP",
   "xPercent": 50,
   "yPercent": 24,
@@ -37,12 +39,14 @@ Default contents:
 | --- | --- | --- |
 | `durationSeconds` | `8` | Number from `5` to `50`; used in animated mode. |
 | `animationEnabled` | `true` | `true` for a timed notification; `false` for persistent display. |
-| `scale` | `1` | Number from `0.5` to `2` (50–200%). The display also fits itself to the available window. |
+| `scale` | `1.5` | Number from `0.5` to `2` (50–200%). Minecraft’s GUI Scale also affects the on-screen size. The notification shrinks as needed to fit the available window. |
 | `position` | `"TOP"` | `"TOP"`: upper part of the screen; `"HUD"`: above the hotbar area; `"MANUAL"`: use center coordinates below. |
 | `xPercent` | `50` | Horizontal center from `0` (left) to `100` (right), used in manual mode. |
 | `yPercent` | `24` | Vertical center from `0` (top) to `100` (bottom), used in manual mode. |
 | `soundId` | `"minecraft:block.note_block.chime"` | One of the sound identifiers listed below. |
 | `language` | `"EN"` | `"EN"` or `"RU"`; independent of Minecraft's selected language. |
+
+New configurations and Reset use 150%. An existing valid saved scale is kept when upgrading.
 
 Manual positioning keeps the whole notification within the screen, so a requested center at an edge is moved inward. Numeric values outside the supported ranges are clamped when the file is loaded. Missing or invalid values fall back to defaults. Unsupported sound identifiers use the default chime. Use JSON numbers with a decimal point; the settings screen also accepts a decimal comma.
 
@@ -87,6 +91,8 @@ Singleplayer uses the server component included in the same JAR. For remote play
 
 ## Русский
 
+Руководство описывает готовящееся обновление **1.3.0**.
+
 ### Экран настроек
 
 Установите необязательный **Mod Menu** для своей версии Minecraft по [таблице совместимости](compatibility.md#русский) и откройте **Моды → DayCounter → Настройки**. Оформление и звук настраиваются отдельно на каждом клиенте и не меняют счётчик мира.
@@ -97,7 +103,7 @@ Singleplayer uses the server component included in the same JAR. For remote play
 - Квадратная кнопка **EN/RU** в правом верхнем углу меняет язык настроек. После применения этот язык используется и в уведомлении. По умолчанию выбран английский; язык Minecraft не меняется.
 - Выбор звука сразу воспроизводит образец. Для сохранения выбора нажмите «Применить».
 
-С анимацией уведомление показывается заданное время с плавным появлением и исчезновением. Без анимации текущий день виден постоянно во время игры, а время показа не используется. При открытом экране или скрытом HUD блок не показывается. При входе число синхронизируется без звука: в постоянном режиме оно видно сразу, в анимированном уведомление ждёт следующего нового дня.
+С анимацией уведомление показывается заданное время с плавным появлением и исчезновением. Иконка проигрывает анимацию один раз за 2,5 секунды и остаётся на последнем кадре до исчезновения уведомления. Без анимации текущий день виден постоянно во время игры с неподвижной PNG-иконкой. При открытом экране или скрытом HUD блок не показывается. При входе число синхронизируется без звука: в постоянном режиме оно видно сразу, в анимированном уведомление ждёт следующего нового дня.
 
 ### Файл и значения
 
@@ -107,11 +113,13 @@ Singleplayer uses the server component included in the same JAR. For remote play
 | --- | --- | --- |
 | `durationSeconds` | `8` | Время показа: 5–50 секунд. |
 | `animationEnabled` | `true` | `true` — анимация; `false` — постоянный режим. |
-| `scale` | `1` | Масштаб 0,5–2; блок дополнительно вписывается в окно. |
+| `scale` | `1.5` | Масштаб от 0,5 до 2 (50–200%). На размер также влияет масштаб интерфейса Minecraft. Блок уменьшается при необходимости, чтобы поместиться в окне. |
 | `position` | `"TOP"` | `"TOP"` — сверху; `"HUD"` — над панелью быстрого доступа; `"MANUAL"` — вручную. |
 | `xPercent`, `yPercent` | `50`, `24` | Координаты центра от 0 до 100% для ручного режима. X растёт вправо, Y — вниз. |
 | `soundId` | `"minecraft:block.note_block.chime"` | Идентификатор из таблицы звуков выше. |
 | `language` | `"EN"` | `"EN"` или `"RU"`, независимо от языка игры. |
+
+В новых настройках и после сброса масштаб составляет 150%. При обновлении ранее сохранённое допустимое значение сохраняется.
 
 Блок остаётся внутри экрана даже при координатах у края. Числа вне диапазона ограничиваются его границами; отсутствующие или неверные значения заменяются стандартными. В JSON дробные числа записываются через точку; в полях экрана настроек можно использовать и запятую.
 

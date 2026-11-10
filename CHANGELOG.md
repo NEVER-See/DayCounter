@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.3.0 — 2026-11-10
+
+- Fixed Mod Menu icon loading with a square PNG; enlarged the settings header icon and centered the EN/RU button label.
+- Updated the mod icon. The new-day icon plays once over 2.5 seconds and holds the last frame until the notification fades.
+- The persistent counter uses the static icon when animation is off.
+- New and reset settings use 150% scale. Saved valid scales are kept. The supported range is 50–200%.
+- Targets the same 16 Minecraft versions as 1.2.0. Previous JARs and checksums are stored in `dist/<game>/archive/<modversion>/`.
+
+### Русский
+
+- Исправлена загрузка иконки Mod Menu: используется квадратная PNG. Увеличен значок в заголовке настроек и отцентрирована надпись EN/RU.
+- Обновлена иконка мода. Иконка нового дня проигрывает анимацию один раз за 2,5 секунды и остаётся на последнем кадре до исчезновения уведомления.
+- При выключенной анимации постоянный счётчик показывает неподвижную иконку.
+- В новых настройках и после сброса масштаб составляет 150%. Ранее сохранённые допустимые значения сохраняются. Диапазон составляет 50–200%.
+- Поддерживаются те же 16 версий Minecraft, что и в 1.2.0. Предыдущие JAR и контрольные суммы хранятся в `dist/<версия игры>/archive/<версия мода>/`.
+
 ## 1.2.0 — 2026-11-10
 
 - Added target-specific builds for 16 stable Minecraft versions: 1.21.1–1.21.11, 26.1, 26.1.1, 26.1.2, 26.2, and 26.3. Each `1.2.0+<game>` JAR works on both the client and server for its named version.

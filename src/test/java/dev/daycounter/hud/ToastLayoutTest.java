@@ -1,5 +1,6 @@
 package dev.daycounter.hud;
 
+import dev.daycounter.config.DayCounterConfig;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -29,8 +30,17 @@ class ToastLayoutTest {
             assertTrue(box.y() + box.height() <= 172.001);
         }
     }
+    @Test void defaultScaleAppliesWhenToastFits() {
+        var box = ToastLayout.calculate(320, 180, 58, new DayCounterConfig().scale,
+                ToastLayout.Anchor.TOP, 50, 24);
+        assertEquals(1.5, box.scale());
+        assertEquals(150, box.width());
+        assertEquals(42, box.height());
+    }
+
     @Test void longDayNumberAutomaticallyScalesToSmallWindow() {
-        var box = ToastLayout.calculate(160, 100, 180, 2, ToastLayout.Anchor.TOP, 50, 24);
+        var box = ToastLayout.calculate(160, 100, 180, new DayCounterConfig().scale,
+                ToastLayout.Anchor.TOP, 50, 24);
         assertTrue(box.scale() < 1);
         assertTrue(box.width() <= 144);
         assertEquals(80, box.x() + box.width() / 2, .01);

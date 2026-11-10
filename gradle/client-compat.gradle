@@ -28,6 +28,31 @@ ext.transformClientSource = { String relativePath, String original, String minec
                 .replace('graphics.text(', 'graphics.drawString(')
                 .replace('g.outline(', patch == 9 || patch == 10 ? 'UiDraw.outline(g, ' : 'g.renderOutline(')
 
+        if (relativePath.endsWith('SunIcon.java')) {
+            if (patch < 11) source = source.replace('Identifier', 'ResourceLocation')
+            if (patch == 1) {
+                // Immediate blits only accept shader tint in 1.21.1.
+                source = source.replace('import net.minecraft.client.renderer.RenderPipelines;',
+                        'import com.mojang.blaze3d.systems.RenderSystem;')
+                source = source.replace('''        g.blit(RenderPipelines.GUI_TEXTURED, texture, x, y, 0f, frameY, size, size,
+                FRAME_SIZE, FRAME_SIZE, FRAME_SIZE, textureHeight, tint);''', '''        float[] color = RenderSystem.getShaderColor();
+        float red = color[0], green = color[1], blue = color[2], alpha = color[3];
+        g.setColor(1f, 1f, 1f, (tint >>> 24) / 255f);
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        try {
+            g.blit(texture, x, y, size, size, 0f, frameY, FRAME_SIZE, FRAME_SIZE, FRAME_SIZE, textureHeight);
+        } finally {
+            RenderSystem.disableBlend();
+            g.setColor(red, green, blue, alpha);
+        }''')
+            } else if (patch < 6) {
+                source = source.replace('import net.minecraft.client.renderer.RenderPipelines;',
+                        'import net.minecraft.client.renderer.RenderType;')
+                        .replace('RenderPipelines.GUI_TEXTURED', 'RenderType::guiTextured')
+            }
+        }
+
         if ((patch == 9 || patch == 10) && relativePath.endsWith('UiDraw.java')) {
             // These versions defer submitOutline without retaining the current pose.
             // Four fills keep focus outlines aligned with the uniformly scaled panel.

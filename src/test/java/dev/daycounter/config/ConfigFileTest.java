@@ -15,12 +15,27 @@ class ConfigFileTest {
 
     @Test void missingFileCreatesDiscoverableDefaultsOnlyOnce() throws Exception {
         Path file = directory.resolve("config/daycounter.json");
-        assertEquals(new DayCounterConfig(), ConfigFile.read(file));
+        var defaults = ConfigFile.read(file);
+        assertEquals(new DayCounterConfig(), defaults);
+        assertEquals(1.5, defaults.scale);
         assertTrue(Files.isRegularFile(file));
-        assertEquals(new JsonPrimitive("EN"), JsonParser.parseString(Files.readString(file)).getAsJsonObject().get("language"));
-        Files.writeString(file, "{\"scale\":1.4,\"futureOption\":true}");
-        assertEquals(1.4, ConfigFile.read(file).scale);
-        assertEquals("{\"scale\":1.4,\"futureOption\":true}", Files.readString(file));
+        var json = JsonParser.parseString(Files.readString(file)).getAsJsonObject();
+        assertEquals(new JsonPrimitive("EN"), json.get("language"));
+        assertEquals(1.5, json.get("scale").getAsDouble());
+
+        String saved = "{\"scale\":1.0,\"futureOption\":true}";
+        Files.writeString(file, saved);
+        assertEquals(1.0, ConfigFile.read(file).scale);
+        assertEquals(saved, Files.readString(file));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"{}", "{\"scale\":null}", "{\"scale\":\"bad\"}", "{\"scale\":1e999}"})
+    void missingOrInvalidScaleUses150Percent(String json) throws Exception {
+        Path file = directory.resolve("daycounter.json");
+        Files.writeString(file, json);
+        assertEquals(1.5, ConfigFile.read(file).scale);
+        assertEquals(json, Files.readString(file));
     }
 
     @ParameterizedTest

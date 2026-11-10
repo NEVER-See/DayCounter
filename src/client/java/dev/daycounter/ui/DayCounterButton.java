@@ -10,6 +10,7 @@ import net.minecraft.network.chat.MutableComponent;
 class DayCounterButton extends Button {
     boolean selected, accent, silent;
     Component narration;
+    int labelOffsetY; // Optical centering for short uppercase labels.
 
     DayCounterButton(int x, int y, int width, int height, Component label, Runnable action) {
         super(x, y, width, height, label, button -> action.run(), DEFAULT_NARRATION);
@@ -30,7 +31,7 @@ class DayCounterButton extends Button {
         var font = Minecraft.getInstance().font;
         String label = UiDraw.fit(font, getMessage(), getWidth() - 10);
         int color = selected || accent && active ? UiDraw.GOLD : active ? UiDraw.TEXT : 0xff8d9093;
-        g.centeredText(font, label, getX() + getWidth() / 2, getY() + (getHeight() - 9) / 2, color);
+        g.centeredText(font, label, getX() + getWidth() / 2, getY() + (getHeight() - font.lineHeight) / 2 + labelOffsetY, color);
     }
 
     @Override public void playDownSound(SoundManager sounds) { if (!silent) super.playDownSound(sounds); }

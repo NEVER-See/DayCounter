@@ -76,15 +76,15 @@ class SettingsDraftTest {
 
     @Test void draftDoesNotChangeOpeningValueAndResetStillNeedsApply() {
         var opening = new DayCounterConfig();
-        opening.scale = 1.5;
+        opening.scale = 1.25;
         var draft = new SettingsDraft(opening);
         assertFalse(draft.canApply());
         draft.durationText("9,5 сек");
         assertEquals(8, opening.durationSeconds);
         assertTrue(draft.canApply());
         draft.reset();
-        assertEquals(1, draft.value().scale);
-        assertEquals(1.5, opening.scale);
+        assertEquals(1.5, draft.value().scale);
+        assertEquals(1.25, opening.scale);
         assertTrue(draft.canApply());
         draft.applied();
         assertFalse(draft.canApply());

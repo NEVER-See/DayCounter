@@ -29,16 +29,4 @@ final class UiDraw {
         return font.width(value) <= width ? value
                 : font.plainSubstrByWidth(value, Math.max(0, width - font.width("…"))) + "…";
     }
-
-    static void sun(GuiGraphicsExtractor g, int x, int y) {
-        int ray = 0xffd6973f;
-        g.fill(x + 7, y, x + 9, y + 3, ray); g.fill(x + 7, y + 13, x + 9, y + 16, ray);
-        g.fill(x, y + 7, x + 3, y + 9, ray); g.fill(x + 13, y + 7, x + 16, y + 9, ray);
-        g.fill(x + 2, y + 2, x + 4, y + 4, ray); g.fill(x + 12, y + 2, x + 14, y + 4, ray);
-        g.fill(x + 2, y + 12, x + 4, y + 14, ray); g.fill(x + 12, y + 12, x + 14, y + 14, ray);
-        g.fill(x + 4, y + 5, x + 12, y + 11, 0xffe8ab45);
-        g.fill(x + 5, y + 4, x + 11, y + 12, 0xffe8ab45);
-        g.fill(x + 5, y + 5, x + 11, y + 10, 0xffffd985);
-        g.fill(x + 6, y + 5, x + 10, y + 7, 0xfffff0b7);
-    }
 }

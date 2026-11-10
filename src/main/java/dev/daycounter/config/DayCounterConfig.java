@@ -5,10 +5,13 @@ import java.util.Objects;
 public final class DayCounterConfig {
     public enum Position { TOP, HUD, MANUAL }
     public enum Language { EN, RU }
+
+    private static final double DEFAULT_SCALE = 1.5;
+
     public Language language = Language.EN;
     public double durationSeconds = 8;
     public boolean animationEnabled = true;
-    public double scale = 1;
+    public double scale = DEFAULT_SCALE;
     public Position position = Position.TOP;
     public double xPercent = 50, yPercent = 24;
     public String soundId = "minecraft:block.note_block.chime";
@@ -30,7 +33,7 @@ public final class DayCounterConfig {
         var result = copy();
         result.language = language == null ? Language.EN : language;
         result.durationSeconds = bounded(durationSeconds, 5, 50, 8);
-        result.scale = bounded(scale, .5, 2, 1);
+        result.scale = bounded(scale, .5, 2, DEFAULT_SCALE);
         result.xPercent = bounded(xPercent, 0, 100, 50);
         result.yPercent = bounded(yPercent, 0, 100, 24);
         result.position = position == null ? Position.TOP : position;

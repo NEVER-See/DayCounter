@@ -4,11 +4,11 @@
 
 ## Minecraft and dependencies
 
-DayCounter **1.2.0** has a separate target for each of the 16 stable Minecraft versions below. Install only the JAR named for your exact version. The same JAR works on its client and server. Snapshots, pre-releases, release candidates, unlisted Minecraft versions, and future API releases are outside this matrix.
+DayCounter **1.3.0** provides a separate build for each of the 16 stable Minecraft versions below, starting with **1.21.1**. Install only the JAR named for your exact version. The same JAR works on its client and server. Snapshots, pre-releases, release candidates, unlisted Minecraft versions, and future API releases are outside this matrix.
 
 Use a compatible stable **Fabric Loader**, at least the minimum listed below; the selected latest Loader for this matrix and the build is **0.20.1**. Also meet the requirements of your chosen Fabric API and optional Mod Menu release. Install **Fabric API** on both the client and server. Choose an API release whose metadata supports your exact Minecraft version. Its version suffix need not be identical: for example, the selected `0.155.3+26.1.2` build is shared by the listed 26.1 targets.
 
-The table reflects [gradle/targets.json](../gradle/targets.json). Each JAR declares the listed minimum Loader and Fabric API versions. Validation covered two pairs per Minecraft target: **minimum Loader + minimum API**, and **Loader 0.20.1 + selected latest API**. The latter is also the default build pair. These endpoints do not guarantee every intermediate or future release. **Mod Menu is optional** and is only needed to open the settings screen; JSON configuration remains available without it.
+The table reflects [gradle/targets.json](../gradle/targets.json). Each JAR declares the listed minimum Loader and Fabric API versions. The validation matrix uses two pairs per Minecraft target: **minimum Loader + minimum API**, and **Loader 0.20.1 + selected latest API**. The latter is also the default build pair. These endpoints do not guarantee every intermediate or future release. **Mod Menu is optional** and is only needed to open the settings screen; JSON configuration remains available without it.
 
 The listed Loader/API minimums apply to **DayCounter without Mod Menu**. Optional Mod Menu can require newer dependencies; check the metadata of its selected release. For Minecraft **26.2**, DayCounter with the minimum API requires **Loader 0.18.4**, while **Mod Menu 20.0.3 requires Loader 0.19.2 or newer**. For Minecraft **1.21.9 and 1.21.10**, DayCounter requires **Loader 0.17.0**, while **Mod Menu 16.0.1 requires Loader 0.17.2 or newer**. Installing Mod Menu does not change DayCounter's own minimum.
 
@@ -35,29 +35,39 @@ The listed Loader/API minimums apply to **DayCounter without Mod Menu**. Optiona
 
 ## Validation status
 
-**Build and loader validation for 1.2.0 passed on 2026-11-10:** all 16 builds; 1,063 JUnit test executions (64–70 per target, no failures, errors, or skipped tests); 32 server and 32 client probes across the minimum/latest pairs; and metadata, Java class-version, and content audits for all 16 JARs. Runtime probes used Java 21 for 1.21.x and Java 25 for 26.x. SHA-256 checks tied the results to the distributed files.
+After the icon and settings-header corrections, all 16 local **1.3.0** builds passed, along with 1,175 JUnit executions, 16 JAR audits, and fresh client loader probes on 1.21.1 and 26.3. The preceding local build passed the full 32 SERVER + 32 CLIENT probe matrix; those historical results are distinguished from the current checks. The [development guide](development.md#validation) describes what these checks cover.
 
-The probes initialized the actual release JAR through Fabric Knot in SERVER/CLIENT mode and then invoked mod entry points. All latest client probes included Mod Menu and its settings-screen factory; minimum client probes used configurations with or without Mod Menu. Server probes checked hooks, saved-data reload, and 26.x legacy migration. They did not start the game loop or open a world/window. Rendering, input, sounds, full gameplay, and FPS remain untested. See the detailed [validation scope](development.md#validation).
+The maintainer reported an in-game check on **Minecraft 26.3**. Other targets have the automated checks described above; a manual gameplay matrix has not been completed. Historical 1.2.0 results remain in the [changelog](../CHANGELOG.md).
 
 ## Release files
 
-For each `<game>`, the release-preparation helper creates:
+The release-preparation helper writes the **1.3.0** build and checksum for each `<game>`.
 
 ```text
 dist/<game>/
-  daycounter-1.2.0+<game>.jar
+  daycounter-1.3.0+<game>.jar
   SHA256SUMS.txt
 ```
 
-For example, Minecraft 1.21.1 uses `dist/1.21.1/daycounter-1.2.0+1.21.1.jar`. These are separate builds, not a single JAR spanning all 16 Minecraft versions.
+For example, the 1.3.0 JAR for Minecraft 1.21.1 is `dist/1.21.1/daycounter-1.3.0+1.21.1.jar`. Previous JARs and checksums are stored in `dist/<game>/archive/<modversion>/`. The archive contains 1.2.0 for all 16 targets.
 
-GitHub release **`v1.2.0`** contains **18 assets**: 16 installable JARs, one aggregate `SHA256SUMS.txt`, and `daycounter-1.2.0-all-versions.zip`. The ZIP preserves the per-game folders; extract only the JAR for your Minecraft version into `mods`. Source archives are for developers and are not installed in the game.
+The local bundle `dist/daycounter-1.3.0-all-versions.zip` contains the 16 new JARs and their per-game checksum files.
+
+GitHub release **`v1.3.0`** contains **18 assets**: 16 installable JARs, one aggregate `SHA256SUMS.txt`, and `daycounter-1.3.0-all-versions.zip`. The ZIP preserves the per-game folders; extract only the JAR for your Minecraft version into `mods`. Source archives are for developers and are not installed in the game.
 
 To verify a downloaded JAR in PowerShell, compare this output with the checksum manifest:
 
 ```powershell
-Get-FileHash -Algorithm SHA256 -LiteralPath '.\daycounter-1.2.0+1.21.1.jar'
+Get-FileHash -Algorithm SHA256 -LiteralPath '.\daycounter-1.3.0+1.21.1.jar'
 ```
+
+## Listing dependencies on download sites
+
+Each release JAR already declares its exact Minecraft target, minimum Fabric Loader and Fabric API, Java requirement, and optional Mod Menu in `fabric.mod.json`. This metadata is generated separately for each target.
+
+Modrinth also stores dependencies in each version listing. Set the exact Minecraft version and Fabric loader, then add **Fabric API as Required** and **Mod Menu as Optional**. If the suggested files target a different Minecraft version, select the matching releases from the table above. The **Selected latest Fabric API** and **Optional Mod Menu** columns identify the versions used together in the current build matrix; they are not one shared dependency pair for all Minecraft versions.
+
+A Modrinth dependency can refer to a whole project or a specific version. Use a specific compatible version when you need an exact selection; project-level dependencies leave version selection to the site/client. The JAR metadata does not replace these listing fields. See the [Modrinth version API](https://docs.modrinth.com/api/operations/createversion/). Other download sites have their own dependency settings.
 
 ## World upgrades
 
@@ -67,25 +77,35 @@ The client settings file and independent EN/RU language choice are shared across
 
 ### Версии и зависимости
 
-Для **DayCounter 1.2.0** предусмотрено 16 отдельных сборок: **1.21.1–1.21.11, 26.1, 26.1.1, 26.1.2, 26.2 и 26.3**. Выбирайте JAR для точной версии игры. Один и тот же файл подходит клиенту и серверу этой версии. Снапшоты, предварительные выпуски, release candidate, отсутствующие в таблице версии Minecraft и будущие версии API в матрицу не входят.
+**DayCounter 1.3.0** доступен в 16 отдельных сборках, начиная с **Minecraft 1.21.1**. Поддерживаемые версии — **1.21.1–1.21.11, 26.1, 26.1.1, 26.1.2, 26.2 и 26.3**. Выбирайте JAR для точной версии игры. Один и тот же файл подходит клиенту и серверу этой версии. Снапшоты, предварительные выпуски, release candidate, отсутствующие в таблице версии Minecraft и будущие версии API в матрицу не входят.
 
 Для **1.21.x нужна Java 21**, для **26.x — Java 25**. Для сборки любого варианта нужен **JDK 25**. Используйте совместимый стабильный **Fabric Loader** не ниже указанного в таблице. Последний выбранный Loader для этой матрицы и сборки — **0.20.1**. Учитывайте также требования выбранных Fabric API и необязательного Mod Menu.
 
-**Fabric API обязателен** на клиенте и сервере. Его метаданные должны разрешать вашу точную версию Minecraft. Суффикс может отличаться: например, выбранный `0.155.3+26.1.2` используется для трёх вариантов 26.1. Минимальные версии Loader, минимальные и последние выбранные версии API, а также версии необязательного **Mod Menu** перечислены в таблице выше и закреплены в [gradle/targets.json](../gradle/targets.json). Каждый JAR объявляет эти минимумы Loader и API. Для каждой версии Minecraft проверены две пары: **минимальный Loader + минимальная API** и **Loader 0.20.1 + последняя выбранная API**. Вторая пара используется при обычной сборке. Совместимость со всеми промежуточными и будущими выпусками не обещается. Без Mod Menu настройки доступны через JSON.
+**Fabric API обязателен** на клиенте и сервере. Его метаданные должны разрешать вашу точную версию Minecraft. Суффикс может отличаться: например, выбранный `0.155.3+26.1.2` используется для трёх вариантов 26.1. Минимальные версии Loader, минимальные и последние выбранные версии API, а также версии необязательного **Mod Menu** перечислены в таблице выше и закреплены в [gradle/targets.json](../gradle/targets.json). Каждый JAR объявляет эти минимумы Loader и API. Матрица проверок использует две пары для каждой версии Minecraft: **минимальный Loader + минимальная API** и **Loader 0.20.1 + последняя выбранная API**. Вторая пара используется при обычной сборке. Совместимость со всеми промежуточными и будущими выпусками не обещается. Без Mod Menu настройки доступны через JSON.
 
 Минимальные версии Loader/API в таблице относятся к **DayCounter без Mod Menu**. Необязательный Mod Menu может требовать более новые зависимости; сверяйтесь с метаданными выбранного выпуска. Например, для **Minecraft 26.2** DayCounter с минимальной API требует **Loader 0.18.4**, а **Mod Menu 20.0.3 — Loader 0.19.2 или новее**. Для **Minecraft 1.21.9 и 1.21.10** DayCounter требует **Loader 0.17.0**, а **Mod Menu 16.0.1 — Loader 0.17.2 или новее**. Требование дополнительного мода не повышает собственный минимум DayCounter.
 
 ### Статус проверок
 
-**Сборки и проверки загрузки 1.2.0 прошли 2026-11-10:** все 16 сборок; 1063 запуска JUnit-тестов (64–70 на версию, без ошибок и пропусков); 32 серверные и 32 клиентские пробы минимальных и последних выбранных пар; проверка метаданных, версии Java-классов и содержимого всех 16 JAR. Пробы выполнялись на Java 21 для 1.21.x и Java 25 для 26.x. Контрольные суммы SHA-256 связали результаты с распространяемыми файлами.
+После исправления иконки и заголовка настроек для локальной **1.3.0** прошли все 16 сборок, 1175 запусков JUnit, аудит 16 JAR и свежие клиентские пробы для 1.21.1 и 26.3. Предыдущий локальный вариант прошёл полную матрицу из 32 серверных и 32 клиентских проб; эти исторические результаты отделены от текущих проверок. Объём проверок описан в [руководстве разработчика](development.md#проверки-и-ограничения).
 
-Пробы инициализировали готовый JAR через Fabric Knot в режимах SERVER/CLIENT и затем вызывали точки входа мода. Все клиентские пробы последних выбранных пар включали Mod Menu и фабрику настроек; минимальные пары проверялись с Mod Menu или без него. Серверные пробы проверяли hooks, сохранение и повторную загрузку данных, а для 26.x — перенос старого счётчика. Игровой цикл, мир и окно не запускались. Отрисовка, ввод, звук, полноценная игра и FPS ещё не проверены. Подробности — в [руководстве разработчика](development.md#русский).
+Разработчик сообщил о проверке в игре на **Minecraft 26.3**. Для остальных целей выполнены описанные выше автоматические проверки; ручная игровая проверка всей матрицы не проводилась. Исторические результаты 1.2.0 сохранены в [истории изменений](../CHANGELOG.md).
 
 ### Файлы релиза
 
-Для каждой версии скрипт подготовки создаёт `dist/<версия игры>/daycounter-1.2.0+<версия игры>.jar` и соседний `SHA256SUMS.txt`. Пример: `dist/1.21.1/daycounter-1.2.0+1.21.1.jar`.
+Для каждой версии игры скрипт подготовки 1.3.0 создаёт `dist/<версия игры>/daycounter-1.3.0+<версия игры>.jar` и соседний `SHA256SUMS.txt`. Для Minecraft 1.21.1 это `dist/1.21.1/daycounter-1.3.0+1.21.1.jar`. Предыдущие JAR и контрольные суммы хранятся в `dist/<версия игры>/archive/<версия мода>/`. Версия 1.2.0 сохранена для всех 16 вариантов.
 
-GitHub-релиз **`v1.2.0`** содержит **18 файлов**: 16 отдельных JAR, общий `SHA256SUMS.txt` и `daycounter-1.2.0-all-versions.zip`. ZIP сохраняет отдельные папки версий. В `mods` помещается только JAR для вашей игры. Архивы исходников в игру не устанавливаются. Контрольную сумму можно проверить командой `Get-FileHash`, приведённой выше, и сравнить со списком.
+Локальный архив `dist/daycounter-1.3.0-all-versions.zip` содержит 16 новых JAR и отдельный файл контрольных сумм для каждой версии игры.
+
+GitHub-релиз **`v1.3.0`** содержит **18 файлов**: 16 отдельных JAR, общий `SHA256SUMS.txt` и `daycounter-1.3.0-all-versions.zip`. ZIP сохраняет отдельные папки версий. В `mods` помещается только JAR для вашей игры. Архивы исходников в игру не устанавливаются. Контрольную сумму можно проверить командой `Get-FileHash`, приведённой выше, и сравнить со списком.
+
+### Зависимости на сайтах загрузки
+
+Каждый JAR уже содержит в `fabric.mod.json` точную версию Minecraft, минимальные Fabric Loader и Fabric API, требование Java и необязательный Mod Menu. Эти сведения формируются отдельно для каждой версии игры.
+
+На Modrinth зависимости дополнительно указываются в карточке каждого выпуска. Выберите точную версию Minecraft и Fabric, затем добавьте **Fabric API — Required**, **Mod Menu — Optional**. Если подсказка предлагает файл для другой версии игры, выберите подходящий выпуск из таблицы выше. Столбцы **Selected latest Fabric API** и **Optional Mod Menu** показывают версии, использованные вместе в текущей матрице сборки; это не одна общая пара для всех Minecraft.
+
+Зависимость Modrinth может ссылаться на проект целиком или конкретный выпуск. Для точного выбора укажите совместимый выпуск; зависимость от проекта оставляет выбор версии сайту/клиенту. Метаданные JAR не заменяют эти поля карточки. См. [API версий Modrinth](https://docs.modrinth.com/api/operations/createversion/). У других сайтов настройки зависимостей свои.
 
 ### Перенос мира
 

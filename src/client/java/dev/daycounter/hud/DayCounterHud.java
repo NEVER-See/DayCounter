@@ -4,6 +4,7 @@ import dev.daycounter.DayCounterClient;
 import dev.daycounter.config.ConfigStore;
 import dev.daycounter.config.DayCounterConfig;
 import dev.daycounter.i18n.Translations;
+import dev.daycounter.ui.SunIcon;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -24,7 +25,8 @@ public final class DayCounterHud {
         if (mc.level == null || mc.player == null || mc.gui.screen() != null || mc.gui.hud.isHidden()) return;
         var config = ConfigStore.get();
         var state = DayCounterClient.NOTIFICATION;
-        double opacity = state.opacity(config.animationEnabled, config.durationSeconds, System.nanoTime());
+        long now = System.nanoTime();
+        double opacity = state.opacity(config.animationEnabled, config.durationSeconds, now);
         if (opacity <= .003) return;
         if (state.day() != cachedDay || config.language != cachedLanguage) {
             cachedDay = state.day();
@@ -45,7 +47,8 @@ public final class DayCounterHud {
         int width = box.baseWidth();
         rounded(graphics, 0, 0, width, ToastLayout.HEIGHT, 6, color(0x77756e, .55 * opacity));
         rounded(graphics, 1, 1, width - 2, ToastLayout.HEIGHT - 2, 5, color(0x232528, .92 * opacity));
-        sun(graphics, 11, 7, opacity);
+        int frame = config.animationEnabled ? state.iconFrame(now) : SunIcon.STATIC_FRAME;
+        SunIcon.draw(graphics, 11, 7, 15, frame, color(0xffffff, opacity));
         graphics.text(mc.font, label, 32 + Math.max(0, (width - 42 - labelWidth) / 2), 10, color(0xf5f2e9, opacity), true);
         graphics.pose().popMatrix();
     }
@@ -60,21 +63,5 @@ public final class DayCounterHud {
             g.fill(x + inset, y + row, x + w - inset, y + row + 1, color);
             g.fill(x + inset, y + h - row - 1, x + w - inset, y + h - row, color);
         }
-    }
-
-    private static void sun(GuiGraphicsExtractor g, int x, int y, double opacity) {
-        int edge = color(0xd79e43, opacity), face = color(0xf2c364, opacity), light = color(0xffdf8c, opacity);
-        g.fill(x + 4, y + 3, x + 11, y + 12, edge);
-        g.fill(x + 3, y + 4, x + 12, y + 11, edge);
-        g.fill(x + 4, y + 4, x + 11, y + 11, face);
-        g.fill(x + 5, y + 4, x + 10, y + 6, light);
-        g.fill(x + 6, y, x + 9, y + 2, edge);
-        g.fill(x + 6, y + 13, x + 9, y + 15, edge);
-        g.fill(x, y + 6, x + 2, y + 9, edge);
-        g.fill(x + 13, y + 6, x + 15, y + 9, edge);
-        g.fill(x + 1, y + 1, x + 3, y + 3, edge);
-        g.fill(x + 12, y + 1, x + 14, y + 3, edge);
-        g.fill(x + 1, y + 12, x + 3, y + 14, edge);
-        g.fill(x + 12, y + 12, x + 14, y + 14, edge);
     }
 }

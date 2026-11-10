@@ -14,7 +14,7 @@ for (script in ['server-compat.gradle', 'client-compat.gradle']) {
 }
 
 group = 'dev.daycounter'
-version = "1.2.0+${targetVersion}"
+version = "${providers.gradleProperty('modVersion').get()}+${targetVersion}"
 base { archivesName = 'daycounter' }
 layout.buildDirectory = layout.projectDirectory.dir("build/${targetVersion}")
 repositories {
@@ -113,3 +113,24 @@ tasks.register('prepareTarget') {
         println "Prepared Minecraft ${targetVersion}; Fabric API ${apiVersion}"
     }
 }
+
+// Mod Menu rejects rectangular images even when the metadata path is valid.
+def verifyModIcon = tasks.register('verifyModIcon') {
+    inputs.files(fileTree('src/main/resources'))
+    doLast {
+        def metadata = new JsonSlurper().parse(file('src/main/resources/fabric.mod.json'))
+        if (!(metadata.icon instanceof String)) {
+            throw new GradleException('The mod icon must declare a PNG resource path.')
+        }
+        def icon = javax.imageio.ImageIO.read(file("src/main/resources/${metadata.icon}"))
+        if (icon == null) throw new GradleException('The mod icon is not a readable image.')
+        try {
+            if (icon.width != icon.height) {
+                throw new GradleException("The mod-list icon must be square: ${icon.width}x${icon.height}")
+            }
+            logger.lifecycle("Validated square mod icon: ${icon.width}x${icon.height}")
+        } finally { icon.flush() }
+    }
+}
+processResources { dependsOn verifyModIcon }
+tasks.named('check') { dependsOn verifyModIcon }

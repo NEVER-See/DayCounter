@@ -47,6 +47,7 @@ public final class DayCounterSettingsScreen extends Screen {
         top = (height - PANEL_HEIGHT * panelScale) / 2;
         duration = xField = yField = null;
         var language = button(304, 14, 22, 22, Component.literal(config().language.name()), this::switchLanguage);
+        language.labelOffsetY = 1;
         language.narration = text("language.switch");
         language.setTooltip(Tooltip.create(language.narration));
         for (int i = 0; i < 2; i++) {
@@ -187,13 +188,13 @@ public final class DayCounterSettingsScreen extends Screen {
         g.pose().scale(panelScale, panelScale);
         UiDraw.rounded(g, 1, 3, PANEL_WIDTH, PANEL_HEIGHT, 9, 0x60000000);
         UiDraw.panel(g, 0, 0, PANEL_WIDTH, PANEL_HEIGHT, 9, 0xff4c4d50, 0xff25272b);
-        UiDraw.sun(g, 16, 17);
+        SunIcon.draw(g, 14, 9, 32, SunIcon.STATIC_FRAME, 0xffffffff);
         g.pose().pushMatrix();
-        g.pose().translate(44, 12);
+        g.pose().translate(56, 12);
         g.pose().scale(1.35f, 1.35f);
         g.text(font, "DayCounter", 0, 0, UiDraw.TEXT);
         g.pose().popMatrix();
-        label(g, text("subtitle"), 44, 28, 250, UiDraw.MUTED);
+        label(g, text("subtitle"), 56, 28, 238, UiDraw.MUTED);
         g.fill(1, 78, PANEL_WIDTH - 1, 79, 0xff3a3c40);
         g.fill(1, 291, PANEL_WIDTH - 1, 292, 0xff3a3c40);
         if (tab == 0) appearanceText(g); else soundText(g);
