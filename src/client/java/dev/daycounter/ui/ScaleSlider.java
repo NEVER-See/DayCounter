@@ -12,13 +12,13 @@ final class ScaleSlider extends AbstractSliderButton {
     private final Language language;
 
     ScaleSlider(int x, int y, int width, double scale, Language language, DoubleConsumer changed) {
-        super(x, y, width, 16, Component.empty(), (scale - .5) / 1.5);
+        super(x, y, width, 16, Component.empty(), (scale - .5) / 3.5);
         this.changed = changed;
         this.language = language;
         updateMessage();
     }
 
-    private double scale() { return (50 + Math.round(value * 30) * 5) / 100.0; }
+    private double scale() { return (50 + Math.round(value * 70) * 5) / 100.0; }
     @Override protected void updateMessage() {
         setMessage(Component.literal(Translations.text(language, "daycounter.scale.value", Math.round(scale() * 100))));
     }

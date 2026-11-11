@@ -11,10 +11,13 @@ final class AnimationToggle extends DayCounterButton {
     private double from, target;
     private long changedAt;
     private final Language language;
+    private final String stateKey;
 
-    AnimationToggle(int x, int y, boolean enabled, Language language, Consumer<Boolean> changed) {
-        super(x, y, 38, 18, message(language, enabled), () -> { });
+    AnimationToggle(int x, int y, boolean enabled, Language language,
+                    String stateKey, Consumer<Boolean> changed) {
+        super(x, y, 38, 18, message(language, stateKey, enabled), () -> { });
         this.language = language;
+        this.stateKey = stateKey;
         this.enabled = enabled;
         from = target = enabled ? 1 : 0;
         changedAt = System.nanoTime();
@@ -22,8 +25,8 @@ final class AnimationToggle extends DayCounterButton {
     }
 
     private final Consumer<Boolean> changed;
-    private static Component message(Language language, boolean enabled) {
-        return Component.literal(Translations.text(language, "daycounter.animation.state",
+    private static Component message(Language language, String stateKey, boolean enabled) {
+        return Component.literal(Translations.text(language, stateKey,
                 Translations.text(language, enabled ? "daycounter.on" : "daycounter.off")));
     }
 
@@ -32,7 +35,7 @@ final class AnimationToggle extends DayCounterButton {
         enabled = !enabled;
         target = enabled ? 1 : 0;
         changedAt = System.nanoTime();
-        setMessage(message(language, enabled));
+        setMessage(message(language, stateKey, enabled));
         changed.accept(enabled);
     }
 

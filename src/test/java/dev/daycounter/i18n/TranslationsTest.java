@@ -51,6 +51,19 @@ class TranslationsTest {
         assertEquals("Включение анимации: Выкл", Translations.text(RU, "daycounter.animation.state", Translations.text(RU, "daycounter.off")));
     }
 
+    @Test void appearanceSettingsAreAvailableInBothLanguages() throws Exception {
+        JsonObject english = resource("en_us"), russian = resource("ru_ru");
+        for (var style : DayCounterConfig.Style.values()) {
+            String key = "daycounter.style." + style.name().toLowerCase(Locale.ROOT);
+            assertTrue(english.has(key), key);
+            assertTrue(russian.has(key), key);
+        }
+        assertEquals("Motion: On", Translations.text(EN, "daycounter.motion.state",
+                Translations.text(EN, "daycounter.on")));
+        assertEquals("Подвижность: Выкл", Translations.text(RU, "daycounter.motion.state",
+                Translations.text(RU, "daycounter.off")));
+    }
+
     private static JsonObject resource(String language) throws Exception {
         try (var input = TranslationsTest.class.getClassLoader().getResourceAsStream("assets/daycounter/lang/" + language + ".json")) {
             assertNotNull(input);

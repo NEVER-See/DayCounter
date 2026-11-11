@@ -1,5 +1,28 @@
 # Changelog
 
+
+## 1.4.0 — 2026-11-11
+
+### English
+
+- Added Cloud, Plaque, and Scroll appearances alongside Standard, with a dedicated Appearance tab.
+- Added a 1–20 second notification delay (default 1 second), synchronized with the new-day sound.
+- Increased the maximum scale to 400%; all styles adapt to long day counts and available screen space.
+- Added independent motion in timed and persistent modes and style-specific number transitions in persistent mode.
+- Added pixel engraving for Plaque and a left-to-right magical reveal with 20 randomly selected colours for Scroll. Detail effects begin 0.4 seconds after the container appears.
+- Reduced notification drawing overhead with cached text metrics, early icon loading, and batched HUD shapes on Minecraft 1.21.1.
+- Kept existing saved settings, EN/RU support, 18 sounds, and one client/server JAR per supported Minecraft version starting at 1.21.1.
+
+### Русский
+
+- Добавлены облачный вид, табличка и свиток рядом со стандартным; оформление вынесено в отдельную вкладку.
+- Добавлена задержка уведомления 1–20 секунд, по умолчанию 1 секунда; звук начинается вместе с показом.
+- Максимальный масштаб увеличен до 400%; все виды подстраиваются под длинные числа и размер окна.
+- Добавлены отдельная подвижность и анимация смены числа в постоянном режиме для каждого вида.
+- На табличке используется пиксельное выжигание, в свитке — магический проход слева направо со случайным выбором из 20 цветов. Эффекты начинаются через 0,4 секунды после появления блока.
+- Снижены затраты на отрисовку: кэширование размеров текста, ранняя загрузка иконок и группировка фигур HUD в Minecraft 1.21.1.
+- Сохранены прежние настройки, EN/RU, 18 звуков и единый клиентский/серверный JAR для каждой поддерживаемой версии Minecraft от 1.21.1.
+
 ## 1.3.0 — 2026-11-10
 
 - Fixed Mod Menu icon loading with a square PNG; enlarged the settings header icon and centered the EN/RU button label.

@@ -40,13 +40,16 @@ final class ConfigFile {
             String language = string(json, "language", "EN");
             try { config.language = DayCounterConfig.Language.valueOf(language.toUpperCase(Locale.ROOT)); }
             catch (IllegalArgumentException ignored) { config.language = DayCounterConfig.Language.EN; }
+            String style = string(json, "style", config.style.name());
+            try { config.style = DayCounterConfig.Style.valueOf(style.toUpperCase(Locale.ROOT)); }
+            catch (IllegalArgumentException ignored) { config.style = DayCounterConfig.Style.STANDARD; }
             config.durationSeconds = number(json, "durationSeconds", config.durationSeconds);
+            config.delaySeconds = number(json, "delaySeconds", config.delaySeconds);
             config.scale = number(json, "scale", config.scale);
             config.xPercent = number(json, "xPercent", config.xPercent);
             config.yPercent = number(json, "yPercent", config.yPercent);
-            var animated = json.get("animationEnabled");
-            if (animated != null && animated.isJsonPrimitive() && animated.getAsJsonPrimitive().isBoolean())
-                config.animationEnabled = animated.getAsBoolean();
+            config.animationEnabled = bool(json, "animationEnabled", config.animationEnabled);
+            config.motionEnabled = bool(json, "motionEnabled", config.motionEnabled);
             String position = string(json, "position", "TOP");
             try { config.position = DayCounterConfig.Position.valueOf(position.toUpperCase(Locale.ROOT)); }
             catch (IllegalArgumentException ignored) { config.position = DayCounterConfig.Position.TOP; }
@@ -80,6 +83,12 @@ final class ConfigFile {
         if (value == null || !value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) return fallback;
         try { return value.getAsDouble(); }
         catch (NumberFormatException ignored) { return fallback; }
+    }
+
+    private static boolean bool(JsonObject json, String key, boolean fallback) {
+        var value = json.get(key);
+        return value != null && value.isJsonPrimitive() && value.getAsJsonPrimitive().isBoolean()
+                ? value.getAsBoolean() : fallback;
     }
 
     private static String string(JsonObject json, String key, String fallback) {

@@ -29,6 +29,33 @@ class ConfigFileTest {
         assertEquals(saved, Files.readString(file));
     }
 
+    @Test void appearanceDefaultsMigrateWithoutRewritingExistingFile() throws Exception {
+        Path file = directory.resolve("daycounter.json");
+        String oldJson = "{\"language\":\"RU\",\"scale\":1.25,\"durationSeconds\":14,\"animationEnabled\":false}";
+        Files.writeString(file, oldJson);
+        var config = ConfigFile.read(file);
+        assertEquals(DayCounterConfig.Style.STANDARD, config.style);
+        assertTrue(config.motionEnabled);
+        assertEquals(1, config.delaySeconds);
+        assertEquals(DayCounterConfig.Language.RU, config.language);
+        assertEquals(1.25, config.scale);
+        assertEquals(14, config.durationSeconds);
+        assertFalse(config.animationEnabled);
+        assertEquals(oldJson, Files.readString(file));
+    }
+
+    @Test void malformedAppearanceFieldsUseDefaultsAndPreserveValidSettings() throws Exception {
+        Path file = directory.resolve("daycounter.json");
+        Files.writeString(file, """
+                {"style":"unknown","motionEnabled":"false","delaySeconds":1e999,"scale":3.75}
+                """);
+        var config = ConfigFile.read(file);
+        assertEquals(DayCounterConfig.Style.STANDARD, config.style);
+        assertTrue(config.motionEnabled);
+        assertEquals(1, config.delaySeconds);
+        assertEquals(3.75, config.scale);
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {"{}", "{\"scale\":null}", "{\"scale\":\"bad\"}", "{\"scale\":1e999}"})
     void missingOrInvalidScaleUses150Percent(String json) throws Exception {
@@ -90,6 +117,10 @@ class ConfigFileTest {
 
     @Test void savedConfigRoundTripsAndLeavesNoTemporaryFiles() throws Exception {
         var c = new DayCounterConfig();
+        c.style = DayCounterConfig.Style.SCROLL;
+        c.motionEnabled = false;
+        c.delaySeconds = 19.75;
+        c.scale = 4;
         c.durationSeconds = 12.75;
         c.position = DayCounterConfig.Position.HUD;
         c.soundId = "minecraft:ui.toast.in";

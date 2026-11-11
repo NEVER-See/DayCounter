@@ -100,8 +100,42 @@ class SettingsDraftTest {
         assertFalse(draft.canApply());
     }
 
+    @Test void delayDraftKeepsTheLastValidValueAndIgnoresErrorsInPersistentMode() {
+        var draft = new SettingsDraft(new DayCounterConfig());
+        assertEquals("1", draft.delayText());
+        assertTrue(draft.delayValid());
+        draft.delayText(" 19,75 сек. ");
+        assertTrue(draft.canApply());
+        assertEquals(19.75, draft.value().delaySeconds);
+
+        draft.delayText("20.01 s");
+        assertFalse(draft.delayValid());
+        assertFalse(draft.canApply());
+        assertEquals(19.75, draft.value().delaySeconds);
+        draft.value().animationEnabled = false;
+        assertTrue(draft.delayValid());
+        assertTrue(draft.canApply());
+        assertEquals("20.01 s", draft.delayText());
+
+        draft.reset();
+        assertEquals("1", draft.delayText());
+        assertTrue(draft.delayValid());
+        assertFalse(draft.canApply());
+    }
+
+    @Test void styleAndMotionEachMarkTheDraftDirty() {
+        var draft = new SettingsDraft(new DayCounterConfig());
+        draft.value().style = DayCounterConfig.Style.PLAQUE;
+        assertTrue(draft.canApply());
+        draft.reset();
+        draft.value().motionEnabled = false;
+        assertTrue(draft.canApply());
+    }
+
     @Test void normalizationHandlesCorruptedAndNonFiniteValues() {
         var c = new DayCounterConfig();
+        c.style = null;
+        c.delaySeconds = Double.NEGATIVE_INFINITY;
         c.durationSeconds = Double.NaN;
         c.scale = 9;
         c.xPercent = -20;
@@ -110,8 +144,10 @@ class SettingsDraftTest {
         c.language = null;
         c.soundId = "unknown:bad";
         var n = c.normalized();
+        assertEquals(DayCounterConfig.Style.STANDARD, n.style);
+        assertEquals(1, n.delaySeconds);
         assertEquals(8, n.durationSeconds);
-        assertEquals(2, n.scale);
+        assertEquals(4, n.scale);
         assertEquals(0, n.xPercent);
         assertEquals(24, n.yPercent);
         assertEquals(DayCounterConfig.Position.TOP, n.position);
@@ -120,6 +156,6 @@ class SettingsDraftTest {
         assertEquals(n, n.copy());
         assertEquals(n.hashCode(), n.copy().hashCode());
         n.copy().scale = 1;
-        assertEquals(2, n.scale);
+        assertEquals(4, n.scale);
     }
 }

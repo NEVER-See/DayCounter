@@ -9,7 +9,7 @@ public final class SettingsDraft {
     private static final Pattern DECIMAL = Pattern.compile("[0-9]+(?:[.,][0-9]+)?");
     private static final Pattern SECONDS = Pattern.compile("\\s*(?:сек\\.?|s|sec|seconds?)\\s*$");
     private DayCounterConfig opening, config;
-    private String durationText, xText, yText;
+    private String durationText, delayText, xText, yText;
 
     public SettingsDraft(DayCounterConfig config) {
         opening = config.normalized();
@@ -23,6 +23,12 @@ public final class SettingsDraft {
         if (value != null) config.durationSeconds = value;
     }
     public String durationText() { return durationText; }
+    public void delayText(String text) {
+        delayText = text;
+        Double value = parse(text, 1, 20, true);
+        if (value != null) config.delaySeconds = value;
+    }
+    public String delayText() { return delayText; }
     public void xText(String text) {
         xText = text;
         Double value = parse(text, 0, 100, false);
@@ -36,14 +42,16 @@ public final class SettingsDraft {
     }
     public String yText() { return yText; }
     public boolean durationValid() { return !config.animationEnabled || parse(durationText, 5, 50, true) != null; }
+    public boolean delayValid() { return !config.animationEnabled || parse(delayText, 1, 20, true) != null; }
     public boolean xValid() { return config.position != DayCounterConfig.Position.MANUAL || parse(xText, 0, 100, false) != null; }
     public boolean yValid() { return config.position != DayCounterConfig.Position.MANUAL || parse(yText, 0, 100, false) != null; }
-    public boolean valid() { return durationValid() && xValid() && yValid(); }
+    public boolean valid() { return durationValid() && delayValid() && xValid() && yValid(); }
     public boolean canApply() { return valid() && !opening.equals(config); }
     public void reset() { config = new DayCounterConfig(); syncText(); }
     public void applied() { opening = config.copy(); }
     public void syncText() {
         durationText = format(config.durationSeconds);
+        delayText = format(config.delaySeconds);
         xText = format(config.xPercent);
         yText = format(config.yPercent);
     }

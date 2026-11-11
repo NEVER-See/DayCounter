@@ -28,6 +28,40 @@ ext.transformClientSource = { String relativePath, String original, String minec
                 .replace('graphics.text(', 'graphics.drawString(')
                 .replace('g.outline(', patch == 9 || patch == 10 ? 'UiDraw.outline(g, ' : 'g.renderOutline(')
 
+        if (relativePath.endsWith('PlaqueEngraving.java')) {
+            if (patch < 11) source = source.replace('Identifier', 'ResourceLocation')
+            if (patch < 5) {
+                source = source.replace('new DynamicTexture(() -> "DayCounter plaque engraving", image)',
+                        'new DynamicTexture(image)')
+            }
+            if (patch == 1) {
+                source = source.replace('image.setPixel(', 'image.setPixelRGBA(')
+                        .replace('import net.minecraft.client.renderer.RenderPipelines;',
+                                'import com.mojang.blaze3d.systems.RenderSystem;')
+                source = source.replace('''        g.blit(RenderPipelines.GUI_TEXTURED, texture, x, y, (float) x, (float) y, width, height,
+                width, height, textureWidth, HEIGHT, tint);''', '''        float[] color = RenderSystem.getShaderColor();
+        float red = color[0], green = color[1], blue = color[2], alpha = color[3];
+        g.setColor(((tint >>> 16) & 255) / 255f, ((tint >>> 8) & 255) / 255f, (tint & 255) / 255f, (tint >>> 24) / 255f);
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        try {
+            g.blit(texture, x, y, width, height, (float) x, (float) y, width, height, textureWidth, HEIGHT);
+        } finally {
+            RenderSystem.disableBlend();
+            g.setColor(red, green, blue, alpha);
+        }''')
+            } else if (patch < 6) {
+                source = source.replace('import net.minecraft.client.renderer.RenderPipelines;',
+                        'import net.minecraft.client.renderer.RenderType;')
+                        .replace('RenderPipelines.GUI_TEXTURED', 'RenderType::guiTextured')
+            }
+        }
+        if (patch == 1 && relativePath.endsWith('DayCounterHud.java')) {
+            // 1.21.1 otherwise flushes every small fill in the HUD immediately.
+            source = source.replace('            ToastRenderer.draw(graphics, font, content,',
+                    '            graphics.drawManaged(() -> ToastRenderer.draw(graphics, font, content,')
+                    .replace('                    MAGIC_PALETTE);', '                    MAGIC_PALETTE));')
+        }
         if (relativePath.endsWith('SunIcon.java')) {
             if (patch < 11) source = source.replace('Identifier', 'ResourceLocation')
             if (patch == 1) {
@@ -37,7 +71,7 @@ ext.transformClientSource = { String relativePath, String original, String minec
                 source = source.replace('''        g.blit(RenderPipelines.GUI_TEXTURED, texture, x, y, 0f, frameY, size, size,
                 FRAME_SIZE, FRAME_SIZE, FRAME_SIZE, textureHeight, tint);''', '''        float[] color = RenderSystem.getShaderColor();
         float red = color[0], green = color[1], blue = color[2], alpha = color[3];
-        g.setColor(1f, 1f, 1f, (tint >>> 24) / 255f);
+        g.setColor(((tint >>> 16) & 255) / 255f, ((tint >>> 8) & 255) / 255f, (tint & 255) / 255f, (tint >>> 24) / 255f);
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         try {
@@ -51,6 +85,16 @@ ext.transformClientSource = { String relativePath, String original, String minec
                         'import net.minecraft.client.renderer.RenderType;')
                         .replace('RenderPipelines.GUI_TEXTURED', 'RenderType::guiTextured')
             }
+        }
+
+        if (patch < 4 && relativePath.endsWith('ToastRenderer.java')) {
+            // Scissors began following the drawing pose in 1.21.4. Earlier
+            // versions need absolute GUI coordinates for the same local clip.
+            source = source.replace('g.enableScissor(x, y, right, bottom);', '''var matrix = g.pose().last().pose();
+        g.enableScissor((int) Math.floor(x * matrix.m00() + matrix.m30()),
+                (int) Math.floor(y * matrix.m11() + matrix.m31()),
+                (int) Math.ceil(right * matrix.m00() + matrix.m30()),
+                (int) Math.ceil(bottom * matrix.m11() + matrix.m31()));''')
         }
 
         if ((patch == 9 || patch == 10) && relativePath.endsWith('UiDraw.java')) {

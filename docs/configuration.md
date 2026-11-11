@@ -2,7 +2,7 @@
 
 [README](../README.md) · [Compatibility](compatibility.md) · [Русский](#русский)
 
-This guide describes the upcoming **1.3.0** update.
+This guide describes the **1.4.0** update.
 
 ## Settings screen
 
@@ -14,7 +14,13 @@ Install the optional **Mod Menu** version listed for your Minecraft version in t
 - The square **EN/RU** button in the top-right corner switches the settings language. English is the default. Apply also changes the day notification's language; Minecraft's own language is unaffected.
 - Selecting a sound previews it immediately. Saving the selection still requires Apply.
 
-With animation enabled, a new-day notification fades in and out over the configured duration. Its icon plays once for 2.5 seconds and holds the last frame until the notification fades. With animation disabled, the current day stays visible during gameplay with a static PNG icon. The display is hidden while a screen is open or the HUD is hidden. Joining a world synchronizes the count silently: animated mode waits for the next new day, while persistent mode shows the received day.
+The **General**, **Appearance**, and **Sounds** tabs separate timing/position, visual style/motion, and sound selection.
+
+With animation enabled, a new day waits **1–20 seconds** (default **1**) before the notification and sound begin. The notification then stays for **5–50 seconds** (default **8**), including its fade. Details start **0.4 seconds** after the container begins appearing. Standard and Cloud use the existing one-shot 2.5-second sun animation. Plaque engraves the sun and number with a red pixel trace; Scroll reveals them with a left-to-right magical sweep. Each sweep changes through randomly selected colours from a 20-colour palette.
+
+With animation disabled, the current day stays visible. New days still animate the number: a downward roll in Standard, a fade in Cloud, fresh engraving in Plaque, or a magical reveal in Scroll. The sun and background stay in place. **Motion** independently enables gentle floating; Cloud moves its three clouds separately. Turning Motion off does not disable the number transition.
+
+All four styles widen for long numbers and shrink to fit the window. The display is hidden while a screen is open or the HUD is hidden. Joining a world synchronizes the count silently: timed mode waits for the next new day, while persistent mode shows the received day.
 
 ## Configuration file
 
@@ -25,6 +31,9 @@ Default contents:
 ```json
 {
   "durationSeconds": 8,
+  "delaySeconds": 1,
+  "style": "STANDARD",
+  "motionEnabled": true,
   "animationEnabled": true,
   "scale": 1.5,
   "position": "TOP",
@@ -37,9 +46,12 @@ Default contents:
 
 | Field | Default | Accepted values and meaning |
 | --- | --- | --- |
+| `delaySeconds` | `1` | Number from `1` to `20`; delay before the timed notification and its sound. |
+| `style` | `"STANDARD"` | `"STANDARD"`, `"CLOUD"`, `"PLAQUE"`, or `"SCROLL"`. |
+| `motionEnabled` | `true` | Gentle floating in both timed and persistent modes. |
 | `durationSeconds` | `8` | Number from `5` to `50`; used in animated mode. |
 | `animationEnabled` | `true` | `true` for a timed notification; `false` for persistent display. |
-| `scale` | `1.5` | Number from `0.5` to `2` (50–200%). Minecraft’s GUI Scale also affects the on-screen size. The notification shrinks as needed to fit the available window. |
+| `scale` | `1.5` | Number from `0.5` to `4` (50–400%). Minecraft’s GUI Scale also affects the on-screen size. The notification shrinks as needed to fit the available window. |
 | `position` | `"TOP"` | `"TOP"`: upper part of the screen; `"HUD"`: above the hotbar area; `"MANUAL"`: use center coordinates below. |
 | `xPercent` | `50` | Horizontal center from `0` (left) to `100` (right), used in manual mode. |
 | `yPercent` | `24` | Vertical center from `0` (top) to `100` (bottom), used in manual mode. |
@@ -91,7 +103,7 @@ Singleplayer uses the server component included in the same JAR. For remote play
 
 ## Русский
 
-Руководство описывает готовящееся обновление **1.3.0**.
+Руководство описывает обновление **1.4.0**.
 
 ### Экран настроек
 
@@ -103,7 +115,13 @@ Singleplayer uses the server component included in the same JAR. For remote play
 - Квадратная кнопка **EN/RU** в правом верхнем углу меняет язык настроек. После применения этот язык используется и в уведомлении. По умолчанию выбран английский; язык Minecraft не меняется.
 - Выбор звука сразу воспроизводит образец. Для сохранения выбора нажмите «Применить».
 
-С анимацией уведомление показывается заданное время с плавным появлением и исчезновением. Иконка проигрывает анимацию один раз за 2,5 секунды и остаётся на последнем кадре до исчезновения уведомления. Без анимации текущий день виден постоянно во время игры с неподвижной PNG-иконкой. При открытом экране или скрытом HUD блок не показывается. При входе число синхронизируется без звука: в постоянном режиме оно видно сразу, в анимированном уведомление ждёт следующего нового дня.
+Вкладки **Общие**, **Внешний вид** и **Звуки** разделяют время/положение, оформление/подвижность и выбор звука.
+
+С анимацией после нового дня проходит **1–20 секунд** (по умолчанию **1**) до появления уведомления и звука. Время показа — **5–50 секунд**, по умолчанию **8**, включая плавное исчезновение. Солнце и эффекты начинаются через **0,4 секунды** после появления блока. Стандартный и облачный виды используют однократную анимацию солнца длиной 2,5 секунды. На табличке солнце и число выжигает красный пиксельный след; в свитке их открывает магическая линия слева направо со случайно выбранными цветами из палитры 20 оттенков.
+
+Без анимации блок остаётся видимым постоянно. При новом дне меняется только число: прокрутка сверху вниз в стандартном виде, прозрачность в облачном, повторное выжигание на табличке и магический проход в свитке. **Подвижность** отдельно включает лёгкое парение; три облака движутся независимо. Отключение подвижности не отменяет смену числа.
+
+Все виды увеличиваются под длинные числа и вписываются в окно. При открытом экране или скрытом HUD блок не показывается. При входе число синхронизируется без звука: в постоянном режиме оно видно сразу, в анимированном уведомление ждёт следующего дня.
 
 ### Файл и значения
 
@@ -111,9 +129,12 @@ Singleplayer uses the server component included in the same JAR. For remote play
 
 | Поле | По умолчанию | Значение |
 | --- | --- | --- |
+| `delaySeconds` | `1` | Задержка перед уведомлением и звуком: 1–20 секунд. |
+| `style` | `"STANDARD"` | `"STANDARD"` — стандартный, `"CLOUD"` — облачный, `"PLAQUE"` — табличка, `"SCROLL"` — свиток. |
+| `motionEnabled` | `true` | Лёгкое парение в анимированном и постоянном режимах. |
 | `durationSeconds` | `8` | Время показа: 5–50 секунд. |
 | `animationEnabled` | `true` | `true` — анимация; `false` — постоянный режим. |
-| `scale` | `1.5` | Масштаб от 0,5 до 2 (50–200%). На размер также влияет масштаб интерфейса Minecraft. Блок уменьшается при необходимости, чтобы поместиться в окне. |
+| `scale` | `1.5` | Масштаб от 0,5 до 4 (50–400%). На размер также влияет масштаб интерфейса Minecraft. Блок уменьшается при необходимости, чтобы поместиться в окне. |
 | `position` | `"TOP"` | `"TOP"` — сверху; `"HUD"` — над панелью быстрого доступа; `"MANUAL"` — вручную. |
 | `xPercent`, `yPercent` | `50`, `24` | Координаты центра от 0 до 100% для ручного режима. X растёт вправо, Y — вниз. |
 | `soundId` | `"minecraft:block.note_block.chime"` | Идентификатор из таблицы звуков выше. |

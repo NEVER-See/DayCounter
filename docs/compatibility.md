@@ -4,7 +4,7 @@
 
 ## Minecraft and dependencies
 
-DayCounter **1.3.0** provides a separate build for each of the 16 stable Minecraft versions below, starting with **1.21.1**. Install only the JAR named for your exact version. The same JAR works on its client and server. Snapshots, pre-releases, release candidates, unlisted Minecraft versions, and future API releases are outside this matrix.
+DayCounter **1.4.0** provides a separate build for each of the 16 stable Minecraft versions below, starting with **1.21.1**. Install only the JAR named for your exact version. The same JAR works on its client and server. Snapshots, pre-releases, release candidates, unlisted Minecraft versions, and future API releases are outside this matrix.
 
 Use a compatible stable **Fabric Loader**, at least the minimum listed below; the selected latest Loader for this matrix and the build is **0.20.1**. Also meet the requirements of your chosen Fabric API and optional Mod Menu release. Install **Fabric API** on both the client and server. Choose an API release whose metadata supports your exact Minecraft version. Its version suffix need not be identical: for example, the selected `0.155.3+26.1.2` build is shared by the listed 26.1 targets.
 
@@ -35,30 +35,28 @@ The listed Loader/API minimums apply to **DayCounter without Mod Menu**. Optiona
 
 ## Validation status
 
-After the icon and settings-header corrections, all 16 local **1.3.0** builds passed, along with 1,175 JUnit executions, 16 JAR audits, and fresh client loader probes on 1.21.1 and 26.3. The preceding local build passed the full 32 SERVER + 32 CLIENT probe matrix; those historical results are distinguished from the current checks. The [development guide](development.md#validation) describes what these checks cover.
-
-The maintainer reported an in-game check on **Minecraft 26.3**. Other targets have the automated checks described above; a manual gameplay matrix has not been completed. Historical 1.2.0 results remain in the [changelog](../CHANGELOG.md).
+The **1.4.0** release passed all 16 builds, 1,463 JUnit test executions, 32 final client loader probes and all release JAR audits. Server loader checks cover byte-identical common/server classes. Native UI checks were performed on 1.21.1 and 26.3. See the [development guide](development.md#validation) for the exact scope and limitations, including server result reuse and the absence of full gameplay FPS testing.
 
 ## Release files
 
-The release-preparation helper writes the **1.3.0** build and checksum for each `<game>`.
+The release-preparation helper writes the **1.4.0** build and checksum for each `<game>`.
 
 ```text
 dist/<game>/
-  daycounter-1.3.0+<game>.jar
+  daycounter-1.4.0+<game>.jar
   SHA256SUMS.txt
 ```
 
-For example, the 1.3.0 JAR for Minecraft 1.21.1 is `dist/1.21.1/daycounter-1.3.0+1.21.1.jar`. Previous JARs and checksums are stored in `dist/<game>/archive/<modversion>/`. The archive contains 1.2.0 for all 16 targets.
+For example, the 1.4.0 JAR for Minecraft 1.21.1 is `dist/1.21.1/daycounter-1.4.0+1.21.1.jar`. Previous JARs and checksums are stored in `dist/<game>/archive/<modversion>/`. The archive contains 1.2.0 and 1.3.0 for all 16 targets.
 
-The local bundle `dist/daycounter-1.3.0-all-versions.zip` contains the 16 new JARs and their per-game checksum files.
+The local bundle `dist/daycounter-1.4.0-all-versions.zip` contains the 16 new JARs and their per-game checksum files.
 
-GitHub release **`v1.3.0`** contains **18 assets**: 16 installable JARs, one aggregate `SHA256SUMS.txt`, and `daycounter-1.3.0-all-versions.zip`. The ZIP preserves the per-game folders; extract only the JAR for your Minecraft version into `mods`. Source archives are for developers and are not installed in the game.
+Download **1.4.0** from [GitHub Releases](https://github.com/NEVER-See/DayCounter/releases/tag/v1.4.0). The multi-version release consists of 16 installable JARs, an aggregate `SHA256SUMS.txt`, and the combined ZIP. Extract only the JAR for your Minecraft version into `mods`. Source archives are for developers and are not installed in the game.
 
 To verify a downloaded JAR in PowerShell, compare this output with the checksum manifest:
 
 ```powershell
-Get-FileHash -Algorithm SHA256 -LiteralPath '.\daycounter-1.3.0+1.21.1.jar'
+Get-FileHash -Algorithm SHA256 -LiteralPath '.\daycounter-1.4.0+1.21.1.jar'
 ```
 
 ## Listing dependencies on download sites
@@ -77,7 +75,7 @@ The client settings file and independent EN/RU language choice are shared across
 
 ### Версии и зависимости
 
-**DayCounter 1.3.0** доступен в 16 отдельных сборках, начиная с **Minecraft 1.21.1**. Поддерживаемые версии — **1.21.1–1.21.11, 26.1, 26.1.1, 26.1.2, 26.2 и 26.3**. Выбирайте JAR для точной версии игры. Один и тот же файл подходит клиенту и серверу этой версии. Снапшоты, предварительные выпуски, release candidate, отсутствующие в таблице версии Minecraft и будущие версии API в матрицу не входят.
+**DayCounter 1.4.0** доступен в 16 отдельных сборках, начиная с **Minecraft 1.21.1**. Поддерживаемые версии — **1.21.1–1.21.11, 26.1, 26.1.1, 26.1.2, 26.2 и 26.3**. Выбирайте JAR для точной версии игры. Один и тот же файл подходит клиенту и серверу этой версии. Снапшоты, предварительные выпуски, release candidate, отсутствующие в таблице версии Minecraft и будущие версии API в матрицу не входят.
 
 Для **1.21.x нужна Java 21**, для **26.x — Java 25**. Для сборки любого варианта нужен **JDK 25**. Используйте совместимый стабильный **Fabric Loader** не ниже указанного в таблице. Последний выбранный Loader для этой матрицы и сборки — **0.20.1**. Учитывайте также требования выбранных Fabric API и необязательного Mod Menu.
 
@@ -87,17 +85,15 @@ The client settings file and independent EN/RU language choice are shared across
 
 ### Статус проверок
 
-После исправления иконки и заголовка настроек для локальной **1.3.0** прошли все 16 сборок, 1175 запусков JUnit, аудит 16 JAR и свежие клиентские пробы для 1.21.1 и 26.3. Предыдущий локальный вариант прошёл полную матрицу из 32 серверных и 32 клиентских проб; эти исторические результаты отделены от текущих проверок. Объём проверок описан в [руководстве разработчика](development.md#проверки-и-ограничения).
-
-Разработчик сообщил о проверке в игре на **Minecraft 26.3**. Для остальных целей выполнены описанные выше автоматические проверки; ручная игровая проверка всей матрицы не проводилась. Исторические результаты 1.2.0 сохранены в [истории изменений](../CHANGELOG.md).
+Выпуск **1.4.0** прошёл 16 сборок, 1463 выполнения JUnit-тестов, 32 финальные клиентские проверки загрузки и аудит всех JAR. Серверные проверки относятся к побайтово неизменным общим/серверным классам. Нативный интерфейс проверен на 1.21.1 и 26.3. Точный объём и ограничения, включая повторное использование серверных результатов и отсутствие проверки FPS в мире, описаны в [руководстве разработчика](development.md#проверки-и-ограничения).
 
 ### Файлы релиза
 
-Для каждой версии игры скрипт подготовки 1.3.0 создаёт `dist/<версия игры>/daycounter-1.3.0+<версия игры>.jar` и соседний `SHA256SUMS.txt`. Для Minecraft 1.21.1 это `dist/1.21.1/daycounter-1.3.0+1.21.1.jar`. Предыдущие JAR и контрольные суммы хранятся в `dist/<версия игры>/archive/<версия мода>/`. Версия 1.2.0 сохранена для всех 16 вариантов.
+Для каждой версии игры скрипт подготовки 1.4.0 создаёт `dist/<версия игры>/daycounter-1.4.0+<версия игры>.jar` и соседний `SHA256SUMS.txt`. Для Minecraft 1.21.1 это `dist/1.21.1/daycounter-1.4.0+1.21.1.jar`. Предыдущие JAR и контрольные суммы хранятся в `dist/<версия игры>/archive/<версия мода>/`. Версии 1.2.0 и 1.3.0 сохранены для всех 16 вариантов.
 
-Локальный архив `dist/daycounter-1.3.0-all-versions.zip` содержит 16 новых JAR и отдельный файл контрольных сумм для каждой версии игры.
+Локальный архив `dist/daycounter-1.4.0-all-versions.zip` содержит 16 новых JAR и отдельный файл контрольных сумм для каждой версии игры.
 
-GitHub-релиз **`v1.3.0`** содержит **18 файлов**: 16 отдельных JAR, общий `SHA256SUMS.txt` и `daycounter-1.3.0-all-versions.zip`. ZIP сохраняет отдельные папки версий. В `mods` помещается только JAR для вашей игры. Архивы исходников в игру не устанавливаются. Контрольную сумму можно проверить командой `Get-FileHash`, приведённой выше, и сравнить со списком.
+Скачайте **1.4.0** в [GitHub Releases](https://github.com/NEVER-See/DayCounter/releases/tag/v1.4.0). Полный многоверсионный выпуск включает 16 отдельных JAR, общий `SHA256SUMS.txt` и ZIP. В `mods` помещается только JAR для вашей игры; архивы исходников не устанавливаются. Контрольную сумму можно сравнить со списком командой `Get-FileHash`, приведённой выше.
 
 ### Зависимости на сайтах загрузки
 
